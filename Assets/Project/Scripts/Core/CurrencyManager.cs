@@ -4,7 +4,11 @@ using AIStartupTycoon.Utils;
 
 namespace AIStartupTycoon.Core
 {
-    
+    /// <summary>
+    /// Single source of truth for currency state: current revenue, lifetime revenue
+    /// (used for unlock thresholds), reputation, and the multipliers that feed into
+    /// both click and passive income.
+    /// </summary>
     public class CurrencyManager : MonoBehaviour
     {
         public static CurrencyManager Instance { get; private set; }
@@ -19,6 +23,7 @@ namespace AIStartupTycoon.Core
         public BigNumber CurrentRevenue { get; private set; }
         public BigNumber LifetimeRevenue { get; private set; }
         public double Reputation { get; private set; }
+        public long TotalClicks { get; private set; } // "Features" stat in the WebGL mockup
 
         [Header("Multipliers (fed by ModelTiers / ComputeUpgrades)")]
         public double ClickPowerBase = 1.0;
@@ -40,10 +45,17 @@ namespace AIStartupTycoon.Core
         /// <summary>Call this on click. Returns the amount actually earned (for VFX/number popups).</summary>
         public BigNumber EarnFromClick()
         {
+            TotalClicks++;
             double amount = ClickPowerBase * GlobalEarningsMultiplier * ReputationMultiplier;
             BigNumber earned = new BigNumber(amount, 0);
             AddRevenue(earned);
             return earned;
+        }
+
+        public void ResetLifetimeRevenue()
+        {
+            LifetimeRevenue = BigNumber.Zero;
+            OnLifetimeRevenueChanged?.Invoke(LifetimeRevenue);
         }
 
         /// <summary>Call this once per tick from GameManager with the summed passive output.</summary>
@@ -80,6 +92,7 @@ namespace AIStartupTycoon.Core
             return reputationGained;
         }
 
+      
         private double CalculateReputationGain(BigNumber lifetimeRevenue)
         {
             double revenue = lifetimeRevenue.ToDouble();

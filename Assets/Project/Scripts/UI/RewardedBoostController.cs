@@ -1,8 +1,8 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 using AIStartupTycoon.Core;
+using TMPro;
 
 namespace AIStartupTycoon.UI
 {
@@ -15,13 +15,17 @@ namespace AIStartupTycoon.UI
     {
         [Header("UI")]
         public Button watchAdButton;
-        public TMP_Text buttonLabel;          // shows "Watch Ad: 2x Earnings" or a countdown
+        public TextMeshProUGUI  buttonLabel;          // shows "Watch Ad: 2x Earnings" or a countdown
         public GameObject cooldownOverlay; // optional: shown while boost or cooldown active
 
         [Header("Boost Settings")]
         public double boostMultiplier = 2.0;
         public float boostDurationSeconds = 1800f; // 30 min
         public float cooldownSeconds = 60f;         // prevents instant re-trigger spam
+
+        public bool IsBoostActive => _boostActive;
+        public float RemainingBoostSeconds { get; private set; }
+        public System.Action OnBoostStateChanged;
 
         private bool _boostActive;
         private bool _onCooldown;
@@ -52,6 +56,7 @@ namespace AIStartupTycoon.UI
         private IEnumerator ApplyBoost()
         {
             _boostActive = true;
+            OnBoostStateChanged?.Invoke();
             RefreshButtonState();
 
             CurrencyManager.Instance.GlobalEarningsMultiplier *= boostMultiplier;
@@ -59,6 +64,7 @@ namespace AIStartupTycoon.UI
             float remaining = boostDurationSeconds;
             while (remaining > 0f)
             {
+                RemainingBoostSeconds = remaining;
                 if (buttonLabel != null)
                     buttonLabel.text = $"2x Active: {Mathf.CeilToInt(remaining)}s";
                 remaining -= Time.deltaTime;
@@ -67,6 +73,8 @@ namespace AIStartupTycoon.UI
 
             CurrencyManager.Instance.GlobalEarningsMultiplier /= boostMultiplier;
             _boostActive = false;
+            RemainingBoostSeconds = 0f;
+            OnBoostStateChanged?.Invoke();
 
             StartCoroutine(CooldownRoutine());
         }

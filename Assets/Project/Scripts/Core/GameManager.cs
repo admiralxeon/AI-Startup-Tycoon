@@ -58,7 +58,11 @@ namespace AIStartupTycoon.Core
             CheckModelTierUnlocks();
         }
 
-        private BigNumber GetTotalPassiveOutput()
+        /// <summary>Total $/sec from all owned engineers, before rate multipliers
+        /// (CurrencyManager applies PassiveOutputMultiplier/GlobalEarningsMultiplier/
+        /// ReputationMultiplier on top of this when actually earning). Exposed
+        /// publicly so UI can display an accurate passive rate.</summary>
+        public BigNumber GetTotalPassiveOutput()
         {
             BigNumber total = BigNumber.Zero;
             foreach (var kvp in _ownedEngineers)
@@ -68,6 +72,35 @@ namespace AIStartupTycoon.Core
                 total += new BigNumber(output, 0);
             }
             return total;
+        }
+
+        /// <summary>Sum of all owned engineers across every tier - the mockup's "Headcount" stat.</summary>
+        public int GetTotalHeadcount()
+        {
+            int total = 0;
+            foreach (var kvp in _ownedEngineers) total += kvp.Value;
+            return total;
+        }
+
+        /// <summary>Returns the next ModelTier not yet unlocked, and progress toward it
+        /// (0-1), for the mockup's "Next milestone" progress bar. Returns null if all
+        /// tiers are unlocked.</summary>
+        public (ModelTierData tier, float progress) GetNextMilestone()
+        {
+            double lifetime = CurrencyManager.Instance.LifetimeRevenue.ToDouble();
+
+            ModelTierData next = null;
+            foreach (var tier in allModelTiers)
+            {
+                if (_unlockedTiers.Contains(tier)) continue;
+                if (next == null || tier.unlockRevenueThreshold < next.unlockRevenueThreshold)
+                    next = tier;
+            }
+
+            if (next == null) return (null, 1f);
+
+            float progress = (float)(lifetime / next.unlockRevenueThreshold);
+            return (next, Mathf.Clamp01(progress));
         }
 
         // --- Engineer hiring ---
@@ -110,6 +143,10 @@ namespace AIStartupTycoon.Core
         }
 
         // --- Compute upgrades (manual purchase) ---
+
+        /// <summary>Count of permanently purchased Compute Upgrades - drives the
+        /// badge on the Upgrades tab in the shop UI.</summary>
+        public int GetPurchasedUpgradeCount() => _purchasedUpgrades.Count;
 
         public bool IsUpgradeUnlocked(ComputeUpgradeData upgrade)
         {
