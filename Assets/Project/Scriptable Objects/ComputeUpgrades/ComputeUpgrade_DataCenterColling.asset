@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AIStartupTycoon.Data.ComputeUpgradeData
   upgradeName: Data Center Cooling
   description: Stops the servers from literally catching fire.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: f4cfaf2c1c8c59d44be3b272ea157b7c, type: 3}
   cost: 5000000
   effectType: 2
   multiplierValue: 1.3

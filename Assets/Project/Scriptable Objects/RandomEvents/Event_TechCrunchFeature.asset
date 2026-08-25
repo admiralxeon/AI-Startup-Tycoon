@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AIStartupTycoon.Data.RandomEventData
   headline: Tech Crunch Feature
   bodyText: TechCrunch wrote about you. Traffic is spiking.
-  illustration: {fileID: 0}
+  illustration: {fileID: 21300000, guid: df783012d5acae64cae38c8cf5b20a91, type: 3}
+  dismissButtonText: 
   temporaryEarningsMultiplier: 1.5
   durationSeconds: 45
   weight: 0.7

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AIStartupTycoon.Data.EngineerData
   engineerName: Intern
   flavorText: Fetches coffee, occasionally commits code.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 92b650c4c1269694da4f515b1b77fd3c, type: 3}
   tierOrder: 0
   baseCost: 10
   costGrowthRate: 1.15

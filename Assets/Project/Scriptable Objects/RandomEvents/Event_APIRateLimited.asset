@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AIStartupTycoon.Data.RandomEventData
   headline: API Rate Limited
   bodyText: Your API just got rate-limited by a bigger player.
-  illustration: {fileID: 0}
+  illustration: {fileID: 21300000, guid: 7db587c22a8aace46bcb10b55396be91, type: 3}
+  dismissButtonText: 
   temporaryEarningsMultiplier: 0.7
   durationSeconds: 20
   weight: 1

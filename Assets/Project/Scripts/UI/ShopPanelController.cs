@@ -15,15 +15,37 @@ namespace AIStartupTycoon.UI
         [Header("Prefabs")]
         public EngineerShopRow engineerRowPrefab;
         public ComputeUpgradeShopRow upgradeRowPrefab;
+        public ReputationUpgradeShopRow reputationUpgradeRowPrefab;
+        public AchievementShopRow achievementRowPrefab;
+        public QuestShopRow questRowPrefab;
+        public IAPShopRow iapRowPrefab;
 
         [Header("Containers (assign the 'Content' object of each ScrollRect)")]
         public Transform engineerListContainer;
         public Transform upgradeListContainer;
+        public Transform reputationUpgradeListContainer;
+        public Transform achievementListContainer;
+        public Transform questListContainer;
+        public Transform storeListContainer;
 
         private void Start()
         {
             SpawnEngineerRows();
             SpawnUpgradeRows();
+            SpawnReputationUpgradeRows();
+            SpawnAchievementRows();
+            SpawnIAPRows();
+            // Deferred one frame: unlike the other Spawn* calls above (whose data comes from
+            // Inspector-serialized fields, ready the instant their singleton's Awake() runs),
+            // QuestManager also depends on GameManager.LoadGame() having restored slot state,
+            // which isn't guaranteed to have happened yet at this point in the frame.
+            StartCoroutine(SpawnQuestRowsNextFrame());
+        }
+
+        private System.Collections.IEnumerator SpawnQuestRowsNextFrame()
+        {
+            yield return null;
+            SpawnQuestRows();
         }
 
         private void SpawnEngineerRows()
@@ -45,6 +67,53 @@ namespace AIStartupTycoon.UI
             {
                 ComputeUpgradeShopRow row = Instantiate(upgradeRowPrefab, upgradeListContainer);
                 row.Initialize(upgrade);
+            }
+        }
+
+        private void SpawnReputationUpgradeRows()
+        {
+            if (GameManager.Instance == null || GameManager.Instance.allReputationUpgrades == null) return;
+
+            foreach (ReputationUpgradeData upgrade in GameManager.Instance.allReputationUpgrades)
+            {
+                ReputationUpgradeShopRow row = Instantiate(reputationUpgradeRowPrefab, reputationUpgradeListContainer);
+                row.Initialize(upgrade);
+            }
+        }
+
+        private void SpawnAchievementRows()
+        {
+            if (Systems.AchievementManager.Instance == null || Systems.AchievementManager.Instance.allAchievements == null) return;
+
+            foreach (var achievement in Systems.AchievementManager.Instance.allAchievements)
+            {
+                AchievementShopRow row = Instantiate(achievementRowPrefab, achievementListContainer);
+                row.Initialize(achievement);
+            }
+        }
+
+        /// <summary>One row per SLOT INDEX, not per QuestData asset - QuestManager rerolls
+        /// each slot's content over time, and the row polls by index to follow along.</summary>
+        private void SpawnQuestRows()
+        {
+            if (Systems.QuestManager.Instance == null || questRowPrefab == null) return;
+
+            for (int i = 0; i < Systems.QuestManager.Instance.slotCount; i++)
+            {
+                QuestShopRow row = Instantiate(questRowPrefab, questListContainer);
+                row.Initialize(i);
+            }
+        }
+
+        private void SpawnIAPRows()
+        {
+            if (IAPManager.Instance == null || IAPManager.Instance.allProducts == null || iapRowPrefab == null) return;
+
+            foreach (var product in IAPManager.Instance.allProducts)
+            {
+                if (product == null) continue;
+                IAPShopRow row = Instantiate(iapRowPrefab, storeListContainer);
+                row.Initialize(product);
             }
         }
     }

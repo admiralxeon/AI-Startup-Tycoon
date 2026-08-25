@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AIStartupTycoon.Data.EngineerData
   engineerName: Staff Engineer
   flavorText: Architected the whole backend solo.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 9529a2ae850e5a541b7aa2c023b2b5de, type: 3}
   tierOrder: 0
-  baseCost: 12000
+  baseCost: 45000
   costGrowthRate: 1.15
   baseOutputPerSecond: 400
-  unlockRevenueThreshold: 100000
+  unlockRevenueThreshold: 175000

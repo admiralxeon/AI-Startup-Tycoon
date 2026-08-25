@@ -6,10 +6,10 @@ using TMPro;
 namespace AIStartupTycoon.UI
 {
     /// <summary>
-    /// Controls the IPO / Prestige screen: shows projected Reputation gain,
-    /// confirms the reset via CrazyGamesManager's midgame ad hook, then calls
-    /// GameManager.ExecuteIPO(). Screen should be a full-panel overlay, hidden
-    /// by default and shown via ShowPanel() (e.g. from an "IPO" button elsewhere).
+    /// Controls the IPO / Prestige screen: shows projected Reputation gain, confirms
+    /// the reset, then calls GameManager.ExecuteIPO(). Screen should be a full-panel
+    /// overlay, hidden by default and shown via ShowPanel() (e.g. from an "IPO" button
+    /// elsewhere).
     /// </summary>
     public class IPOScreenController : MonoBehaviour
     {
@@ -31,18 +31,31 @@ namespace AIStartupTycoon.UI
         [Tooltip("Minimum lifetime revenue before IPO is allowed. Tune during playtesting.")]
         public double minimumLifetimeRevenueToIPO = 50000;
 
+        [Header("Confirm Dialog Grouping")]
+        public GameObject confirmContentRoot; // the ask-to-confirm dialog contents
+
+        [Header("Results / Celebration")]
+        public GameObject resultsContentRoot;
+        public TMP_Text resultsReputationGainedLabel;
+        public TMP_Text resultsTotalReputationLabel;
+        public Button resultsContinueButton;
+
         private void Start()
         {
             if (openIPOButton != null) openIPOButton.onClick.AddListener(ShowPanel);
             confirmIPOButton.onClick.AddListener(OnConfirmPressed);
-            cancelButton.onClick.AddListener(HidePanel);
+            cancelButton.onClick.AddListener(OnCancelPressed);
+            if (resultsContinueButton != null) resultsContinueButton.onClick.AddListener(OnResultsContinuePressed);
 
             if (panelRoot != null) panelRoot.SetActive(false);
+            if (resultsContentRoot != null) resultsContentRoot.SetActive(false);
         }
 
         public void ShowPanel()
         {
             panelRoot.SetActive(true);
+            if (confirmContentRoot != null) confirmContentRoot.SetActive(true);
+            if (resultsContentRoot != null) resultsContentRoot.SetActive(false);
             RefreshDisplay();
         }
 
@@ -84,19 +97,40 @@ namespace AIStartupTycoon.UI
             return System.Math.Sqrt(lifetimeRevenue / 10000.0);
         }
 
+        private void OnCancelPressed()
+        {
+            if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTap();
+            HidePanel();
+        }
+
         private void OnConfirmPressed()
         {
-            confirmIPOButton.interactable = false; // prevent double-clicks during the ad
+            confirmIPOButton.interactable = false; // prevent double-clicks
+            if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTap();
 
-            CrazyGamesManager.Instance.RequestMidgameAd(onComplete: () =>
-            {
-                double reputationGained = GameManager.Instance.ExecuteIPO();
-                HidePanel();
+            double reputationGained = GameManager.Instance.ExecuteIPO();
+            ShowResults(reputationGained);
+            Debug.Log($"[IPOScreenController] IPO complete. Reputation gained: {reputationGained:N1}");
+        }
 
-                // TODO: show a results/celebration screen here with reputationGained,
-                // e.g. "You gained +12.4 Reputation! Starting your next company..."
-                Debug.Log($"[IPOScreenController] IPO complete. Reputation gained: {reputationGained:N1}");
-            });
+        private void ShowResults(double reputationGained)
+        {
+            Handheld.Vibrate(); // IPO is a major, infrequent milestone - worth the haptic hit
+
+            if (confirmContentRoot != null) confirmContentRoot.SetActive(false);
+            confirmIPOButton.interactable = true; // reset for next time the panel opens
+
+            if (resultsContentRoot != null) resultsContentRoot.SetActive(true);
+            if (resultsReputationGainedLabel != null)
+                resultsReputationGainedLabel.text = $"+{reputationGained:N1} Reputation Earned";
+            if (resultsTotalReputationLabel != null)
+                resultsTotalReputationLabel.text = $"Total Reputation: {CurrencyManager.Instance.Reputation:N1}";
+        }
+
+        private void OnResultsContinuePressed()
+        {
+            if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTap();
+            HidePanel();
         }
     }
 }

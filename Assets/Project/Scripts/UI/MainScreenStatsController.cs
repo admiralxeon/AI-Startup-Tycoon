@@ -11,7 +11,6 @@ namespace AIStartupTycoon.UI
     {
         [Header("Header")]
         public TMP_Text stageLabel;
-        public TMP_Text cashLabel;
         public TMP_Text passiveRateLabel;
         public TMP_Text valuationLabel;
         public TMP_Text reputationLabel;
@@ -36,9 +35,21 @@ namespace AIStartupTycoon.UI
 
         private void OnEnable()
         {
-            CurrencyManager.Instance.OnRevenueChanged += _ => RefreshAll();
-            CurrencyManager.Instance.OnLifetimeRevenueChanged += _ => RefreshAll();
+            // Instance can be null here on the editor's exit-play-mode teardown pass, which
+            // re-enables scene objects after CurrencyManager has already been torn down.
+            if (CurrencyManager.Instance == null) return;
+            CurrencyManager.Instance.OnRevenueChanged += HandleCurrencyChanged;
+            CurrencyManager.Instance.OnLifetimeRevenueChanged += HandleCurrencyChanged;
         }
+
+        private void OnDisable()
+        {
+            if (CurrencyManager.Instance == null) return;
+            CurrencyManager.Instance.OnRevenueChanged -= HandleCurrencyChanged;
+            CurrencyManager.Instance.OnLifetimeRevenueChanged -= HandleCurrencyChanged;
+        }
+
+        private void HandleCurrencyChanged(BigNumber _) => RefreshAll();
 
         private void Start() => RefreshAll();
 
@@ -55,7 +66,7 @@ namespace AIStartupTycoon.UI
         private void RefreshHeader()
         {
             var cm = CurrencyManager.Instance;
-            cashLabel.text = $"${cm.CurrentRevenue}";
+            // Cash itself is animated by AnimatedCashLabel, which owns that label exclusively.
             valuationLabel.text = $"${(BigNumber)(cm.LifetimeRevenue.ToDouble() * valuationMultiplier)}";
             reputationLabel.text = $"{cm.Reputation:N0}";
             stageLabel.text = GetStageLabel(cm.LifetimeRevenue.ToDouble());

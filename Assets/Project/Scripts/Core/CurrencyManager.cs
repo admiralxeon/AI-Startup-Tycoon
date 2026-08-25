@@ -33,6 +33,7 @@ namespace AIStartupTycoon.Core
 
         public event Action<BigNumber> OnRevenueChanged;
         public event Action<BigNumber> OnLifetimeRevenueChanged;
+        public event Action<BigNumber> OnClickEarned; // fires only for player taps, with the final (combo-boosted) amount
 
         private void Awake()
         {
@@ -46,9 +47,13 @@ namespace AIStartupTycoon.Core
         public BigNumber EarnFromClick()
         {
             TotalClicks++;
-            double amount = ClickPowerBase * GlobalEarningsMultiplier * ReputationMultiplier;
+            double comboMultiplier = ClickComboManager.Instance != null
+                ? ClickComboManager.Instance.RegisterClick()
+                : 1.0;
+            double amount = ClickPowerBase * GlobalEarningsMultiplier * ReputationMultiplier * comboMultiplier;
             BigNumber earned = new BigNumber(amount, 0);
             AddRevenue(earned);
+            OnClickEarned?.Invoke(earned);
             return earned;
         }
 
@@ -73,6 +78,23 @@ namespace AIStartupTycoon.Core
             OnLifetimeRevenueChanged?.Invoke(LifetimeRevenue);
         }
 
+        /// <summary>Grants currency from a source that isn't a click or passive tick (e.g.
+        /// daily login rewards). Counts toward LifetimeRevenue like any other income.</summary>
+        public BigNumber GrantCash(BigNumber amount)
+        {
+            AddRevenue(amount);
+            return amount;
+        }
+
+        /// <summary>Grants raw Reputation (prestige currency) directly, as opposed to a
+        /// permanent multiplier reward like ReputationUpgradeData/AchievementData use -
+        /// for one-off rewards such as daily login bonuses.</summary>
+        public void GrantReputation(double amount)
+        {
+            Reputation += amount;
+            reputation = Reputation; // keep the Inspector-visible mirror in sync
+        }
+
         /// <summary>Attempts to spend; returns false without deducting if insufficient funds.</summary>
         public bool TrySpend(BigNumber cost)
         {
@@ -82,11 +104,21 @@ namespace AIStartupTycoon.Core
             return true;
         }
 
+        /// <summary>Attempts to spend Reputation (the prestige currency); returns false without deducting if insufficient.</summary>
+        public bool TrySpendReputation(double cost)
+        {
+            if (Reputation < cost) return false;
+            Reputation -= cost;
+            reputation = Reputation; // keep the Inspector-visible mirror in sync
+            return true;
+        }
+
         /// <summary>Called on IPO: resets current run currency, grants Reputation, keeps LifetimeRevenue as historical record.</summary>
         public double ExecuteIPO()
         {
             double reputationGained = CalculateReputationGain(LifetimeRevenue);
-            reputation += reputationGained;
+            Reputation += reputationGained;
+            reputation = Reputation; // keep the Inspector-visible mirror in sync
             CurrentRevenue = BigNumber.Zero;
             OnRevenueChanged?.Invoke(CurrentRevenue);
             return reputationGained;
@@ -100,11 +132,13 @@ namespace AIStartupTycoon.Core
         }
 
         // --- Save/Load support ---
-        public void LoadState(double revMantissa, int revExp, double lifetimeMantissa, int lifetimeExp, double savedReputation)
+        public void LoadState(double revMantissa, int revExp, double lifetimeMantissa, int lifetimeExp, double savedReputation, long savedTotalClicks = 0)
         {
             CurrentRevenue = new BigNumber(revMantissa, revExp);
             LifetimeRevenue = new BigNumber(lifetimeMantissa, lifetimeExp);
-            reputation = savedReputation;
+            Reputation = savedReputation;
+            reputation = Reputation; // keep the Inspector-visible mirror in sync
+            TotalClicks = savedTotalClicks;
             OnRevenueChanged?.Invoke(CurrentRevenue);
             OnLifetimeRevenueChanged?.Invoke(LifetimeRevenue);
         }

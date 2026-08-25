@@ -44,17 +44,30 @@ namespace AIStartupTycoon.UI
             headlineLabel.text = evt.headline;
             bodyLabel.text = evt.bodyText;
 
-            if (illustration != null && evt.illustration != null)
-                illustration.sprite = evt.illustration;
-
             bool hasEffect = evt.temporaryEarningsMultiplier != 1.0;
+
+            if (illustration != null && evt.illustration != null)
+            {
+                illustration.sprite = evt.illustration;
+                // Tints the icon by outcome so it reads at a glance, same sign logic as the effect chip below.
+                illustration.color = !hasEffect
+                    ? new Color32(210, 220, 235, 255)
+                    : evt.temporaryEarningsMultiplier >= 1.0
+                        ? new Color32(120, 220, 130, 255)
+                        : new Color32(255, 122, 90, 255);
+            }
+
             if (effectChipRoot != null) effectChipRoot.SetActive(hasEffect);
 
             if (hasEffect && effectChipLabel != null)
             {
                 double percent = (evt.temporaryEarningsMultiplier - 1.0) * 100.0;
-                string sign = percent >= 0 ? "+" : "";
+                bool positive = percent >= 0;
+                string sign = positive ? "+" : "";
                 effectChipLabel.text = $"Revenue {sign}{percent:N0}% for the next {evt.durationSeconds:N0} seconds";
+                effectChipLabel.color = positive
+                    ? new Color32(120, 220, 130, 255)
+                    : new Color32(255, 122, 90, 255);
             }
 
             if (dismissButtonLabel != null)
@@ -71,6 +84,7 @@ namespace AIStartupTycoon.UI
         {
             RandomEventManager.Instance.AcknowledgeEvent();
             panelRoot.SetActive(false);
+            if (Core.UIAudioManager.Instance != null) Core.UIAudioManager.Instance.PlayTap();
         }
     }
 }

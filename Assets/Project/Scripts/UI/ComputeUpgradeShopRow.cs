@@ -19,6 +19,7 @@ namespace AIStartupTycoon.UI
         public TMP_Text costLabel;
         public Button buyButton;
         public GameObject lockedOverlay;
+        public TMP_Text lockedRequirementLabel; // caption on the locked overlay itself
         public GameObject purchasedOverlay;
 
         private ComputeUpgradeData _data;
@@ -44,8 +45,10 @@ namespace AIStartupTycoon.UI
         {
             if (_data == null || GameManager.Instance == null) return;
 
+            _purchased = GameManager.Instance.IsUpgradePurchased(_data);
             bool unlocked = GameManager.Instance.IsUpgradeUnlocked(_data);
             if (lockedOverlay != null) lockedOverlay.SetActive(!unlocked && !_purchased);
+            if (lockedRequirementLabel != null) lockedRequirementLabel.text = $"Unlocks at ${_data.unlockRevenueThreshold:N0} revenue";
             buyButton.interactable = unlocked && !_purchased;
             if (purchasedOverlay != null) purchasedOverlay.SetActive(_purchased);
         }
@@ -57,6 +60,7 @@ namespace AIStartupTycoon.UI
                 _purchased = true;
                 buyButton.interactable = false;
                 Refresh();
+                if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTap();
             }
         }
     }

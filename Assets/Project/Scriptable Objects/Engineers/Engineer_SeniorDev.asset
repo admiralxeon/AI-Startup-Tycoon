@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AIStartupTycoon.Data.EngineerData
   engineerName: Senior Dev
   flavorText: Reviews everyone else's PR.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: e4223509a5f030f4c9290ef034c88833, type: 3}
   tierOrder: 0
-  baseCost: 1100
+  baseCost: 2500
   costGrowthRate: 1.15
   baseOutputPerSecond: 40
-  unlockRevenueThreshold: 5000
+  unlockRevenueThreshold: 8000

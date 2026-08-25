@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AIStartupTycoon.Data.ComputeUpgradeData
   upgradeName: Cloud Cluster
   description: Rent someone else's data center.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: c4b2ef188e4e11b4a9a77ea4e52d87d4, type: 3}
   cost: 25000
   effectType: 1
   multiplierValue: 1.5

@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0afb10e9118f056498eff26a3d638c4b, type: 3}
+  m_Name: IAPProduct_RemoveAds
+  m_EditorClassIdentifier: Assembly-CSharp::AIStartupTycoon.Data.IAPProductData
+  productId: remove_ads
+  displayName: Remove Ads
+  description: No more ad interruptions, ever.
+  icon: {fileID: 21300000, guid: acc7a70268a2b5f45a1057fbaed24d89, type: 3}
+  kind: 0
+  fallbackPriceText: $3.99
+  cashReward: 0
+  reputationReward: 0
+  permanentEarningsMultiplier: 1
+  removesAds: 1

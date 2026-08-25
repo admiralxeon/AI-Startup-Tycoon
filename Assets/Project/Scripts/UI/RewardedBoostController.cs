@@ -7,9 +7,11 @@ using TMPro;
 namespace AIStartupTycoon.UI
 {
     /// <summary>
-    /// Handles the "Watch Ad for 2x Earnings" button: requests a rewarded ad via
-    /// CrazyGamesManager, and on success applies a temporary global earnings
-    /// multiplier for a set duration. Attach to a dedicated UI button GameObject.
+    /// Handles the "Watch Ad for 2x Earnings" button: applies a temporary global
+    /// earnings multiplier for a set duration. Attach to a dedicated UI button
+    /// GameObject. No ad SDK is wired in currently - pressing the button grants the
+    /// boost immediately; hook a provider into OnWatchAdButtonPressed if/when one
+    /// exists again.
     /// </summary>
     public class RewardedBoostController : MonoBehaviour
     {
@@ -39,18 +41,9 @@ namespace AIStartupTycoon.UI
         public void OnWatchAdButtonPressed()
         {
             if (_boostActive || _onCooldown) return;
+            if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTap();
 
-            CrazyGamesManager.Instance.RequestRewardedAd(
-                onRewardGranted: () =>
-                {
-                    StartCoroutine(ApplyBoost());
-                },
-                onFailed: () =>
-                {
-                    // Optional: surface a toast/message here, e.g. "Ad unavailable, try again later."
-                    Debug.Log("[RewardedBoostController] Ad failed or was skipped - no boost granted.");
-                }
-            );
+            StartCoroutine(ApplyBoost());
         }
 
         private IEnumerator ApplyBoost()

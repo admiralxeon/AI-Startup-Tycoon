@@ -21,6 +21,7 @@ namespace AIStartupTycoon.UI
         public TMP_Text outputLabel;
         public Button buyButton;
         public GameObject lockedOverlay; // shown/hidden based on unlock state
+        public TMP_Text lockedRequirementLabel; // caption on the locked overlay itself
 
         private EngineerData _data;
 
@@ -46,19 +47,27 @@ namespace AIStartupTycoon.UI
 
             bool unlocked = GameManager.Instance.IsEngineerUnlocked(_data);
             if (lockedOverlay != null) lockedOverlay.SetActive(!unlocked);
+            if (lockedRequirementLabel != null) lockedRequirementLabel.text = $"Unlocks at ${_data.unlockRevenueThreshold:N0} revenue";
             buyButton.interactable = unlocked;
 
             int owned = GameManager.Instance.GetOwnedCount(_data);
             double cost = _data.GetCostForUnit(owned);
 
-            costLabel.text = unlocked ? $"${cost:N0}" : $"Unlocks at ${_data.unlockRevenueThreshold:N0}";
+            // Always show the real cost, even while locked - LockedOverlay (opaque enough to
+            // fully hide row content behind it) is what communicates the unlock requirement;
+            // this used to duplicate that same message here too, which the overlay's ~80%
+            // opacity wasn't quite opaque enough to hide, so the two texts visibly collided.
+            costLabel.text = $"${cost:N0}";
             ownedLabel.text = $"x{owned}";
             outputLabel.text = $"{_data.GetOutputForCount(owned):N1}/sec";
         }
 
         private void OnBuyClicked()
         {
-            GameManager.Instance.TryHireEngineer(_data);
+            if (GameManager.Instance.TryHireEngineer(_data))
+            {
+                if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTap();
+            }
         }
     }
 }

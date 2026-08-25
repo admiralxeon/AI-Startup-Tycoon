@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AIStartupTycoon.Data.RandomEventData
   headline: Competitor Clone
   bodyText: A competitor cloned your product overnight.
-  illustration: {fileID: 0}
+  illustration: {fileID: 21300000, guid: 8a90a697ffbdf3d44904afaec035f951, type: 3}
+  dismissButtonText: 
   temporaryEarningsMultiplier: 0.85
   durationSeconds: 30
   weight: 1

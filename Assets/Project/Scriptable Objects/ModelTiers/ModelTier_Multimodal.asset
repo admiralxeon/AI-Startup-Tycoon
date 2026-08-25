@@ -16,5 +16,5 @@ MonoBehaviour:
   unlockFlavorText: "Text, images, audio \u2014 all at once, allegedly."
   icon: {fileID: 0}
   tierOrder: 1000000
-  unlockRevenueThreshold: 2
+  unlockRevenueThreshold: 1000000
   globalEarningsMultiplier: 2

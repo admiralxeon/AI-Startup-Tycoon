@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AIStartupTycoon.Data.EngineerData
   engineerName: 10x Engineer
   flavorText: Writes a feature before you finish reading this.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: d8f014d51ed5acf4fa35c428061d8967, type: 3}
   tierOrder: 0
-  baseCost: 130000
+  baseCost: 800000
   costGrowthRate: 1.15
   baseOutputPerSecond: 4000
-  unlockRevenueThreshold: 2000000
+  unlockRevenueThreshold: 3000000

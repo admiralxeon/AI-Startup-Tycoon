@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AIStartupTycoon.Data.ComputeUpgradeData
   upgradeName: Basic GPU
   description: A single GPU, humming quietly in a closet.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: e26f5ab9e72ff1d4192cb37a256be9b6, type: 3}
   cost: 500
   effectType: 1
   multiplierValue: 1.25

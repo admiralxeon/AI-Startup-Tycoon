@@ -1,44 +1,28 @@
 using UnityEngine;
-using TMPro;
 using UnityEngine.UI;
 using AIStartupTycoon.Core;
-using AIStartupTycoon.Utils;
 
 namespace AIStartupTycoon.UI
 {
     /// <summary>
-    /// Minimal persistent UI controller: just the click button and the top-level
-    /// revenue counter. Replaces TestUIController now that hiring is handled by
-    /// ShopPanelController + per-row EngineerShopRow components.
+    /// Minimal persistent UI controller: just the click button. The revenue counter it used
+    /// to also drive is now owned exclusively by AnimatedCashLabel (attached directly to that
+    /// label), so both don't fight over the same text every frame.
     /// </summary>
     public class ClickAndRevenueController : MonoBehaviour
     {
         [Header("Click")]
         public Button clickButton;
-        public TMP_Text revenueLabel; // swap for TMP_Text if using TextMeshPro
 
         private void Start()
         {
             clickButton.onClick.AddListener(OnClickButtonPressed);
-            CurrencyManager.Instance.OnRevenueChanged += OnRevenueChanged;
-
-            revenueLabel.text = $"${CurrencyManager.Instance.CurrentRevenue}";
-        }
-
-        private void OnDestroy()
-        {
-            if (CurrencyManager.Instance != null)
-                CurrencyManager.Instance.OnRevenueChanged -= OnRevenueChanged;
         }
 
         private void OnClickButtonPressed()
         {
             CurrencyManager.Instance.EarnFromClick();
-        }
-
-        private void OnRevenueChanged(BigNumber newRevenue)
-        {
-            revenueLabel.text = $"${newRevenue}";
+            if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayClick();
         }
     }
 }

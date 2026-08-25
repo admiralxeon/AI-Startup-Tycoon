@@ -20,6 +20,7 @@ namespace AIStartupTycoon.Core
         public List<EngineerData> allEngineers;
         public List<ModelTierData> allModelTiers;
         public List<ComputeUpgradeData> allComputeUpgrades;
+        public List<ReputationUpgradeData> allReputationUpgrades;
 
         [Header("Offline Earnings Config")]
         [Range(0f, 1f)] public float offlineEarningsRate = 0.5f;
@@ -30,10 +31,15 @@ namespace AIStartupTycoon.Core
         private HashSet<ModelTierData> _unlockedTiers = new HashSet<ModelTierData>();
         private HashSet<ComputeUpgradeData> _purchasedUpgrades = new HashSet<ComputeUpgradeData>();
 
+        // Permanent - intentionally NOT cleared by ExecuteIPO. This is the actual
+        // payoff for prestiging, so it must survive every future reset.
+        private HashSet<ReputationUpgradeData> _purchasedReputationUpgrades = new HashSet<ReputationUpgradeData>();
+
         public event Action<EngineerData, int> OnEngineerCountChanged;
         public event Action<ModelTierData> OnModelTierUnlocked;
         public event Action<ComputeUpgradeData> OnComputeUpgradePurchased;
-        public event Action<BigNumber> OnOfflineEarningsApplied; // UI can subscribe to show a "welcome back" popup
+        public event Action<ReputationUpgradeData> OnReputationUpgradePurchased;
+        public event Action<BigNumber, double> OnOfflineEarningsApplied; // (earned, secondsAway) - UI can subscribe to show a "welcome back" popup
 
         private void Awake()
         {
@@ -43,9 +49,22 @@ namespace AIStartupTycoon.Core
             foreach (var e in allEngineers) _ownedEngineers[e] = 0;
         }
 
+        private bool _hasLoaded;
+
         private void Start()
         {
             LoadGame();
+            _hasLoaded = true; // guards OnApplicationPause/Quit below - see their comments
+            // Deferred one frame: this fires OnOfflineEarningsApplied for the "welcome
+            // back" popup, but Unity doesn't guarantee this Start() runs after other
+            // scripts' Start() - firing immediately risked the popup's own Start()
+            // subscribing too late and missing the event entirely.
+            StartCoroutine(ApplyOfflineEarningsNextFrame());
+        }
+
+        private System.Collections.IEnumerator ApplyOfflineEarningsNextFrame()
+        {
+            yield return null;
             ApplyOfflineEarnings();
         }
 
@@ -148,6 +167,8 @@ namespace AIStartupTycoon.Core
         /// badge on the Upgrades tab in the shop UI.</summary>
         public int GetPurchasedUpgradeCount() => _purchasedUpgrades.Count;
 
+        public bool IsUpgradePurchased(ComputeUpgradeData upgrade) => _purchasedUpgrades.Contains(upgrade);
+
         public bool IsUpgradeUnlocked(ComputeUpgradeData upgrade)
         {
             if (upgrade.prerequisite != null && !_purchasedUpgrades.Contains(upgrade.prerequisite))
@@ -185,7 +206,64 @@ namespace AIStartupTycoon.Core
             }
         }
 
+        // --- Reputation Upgrades (permanent - survive IPO resets) ---
+
+        public bool IsReputationUpgradePurchased(ReputationUpgradeData upgrade) =>
+            _purchasedReputationUpgrades.Contains(upgrade);
+
+        /// <summary>Count of permanently purchased Reputation (Prestige) upgrades - drives the AchievementManager's ReputationUpgradesPurchased requirement.</summary>
+        public int GetPurchasedReputationUpgradeCount() => _purchasedReputationUpgrades.Count;
+
+        public bool IsReputationUpgradeUnlocked(ReputationUpgradeData upgrade)
+        {
+            if (upgrade.prerequisite != null && !_purchasedReputationUpgrades.Contains(upgrade.prerequisite))
+                return false;
+            return true;
+        }
+
+        public bool TryPurchaseReputationUpgrade(ReputationUpgradeData upgrade)
+        {
+            if (_purchasedReputationUpgrades.Contains(upgrade)) return false;
+            if (!IsReputationUpgradeUnlocked(upgrade)) return false;
+
+            if (!CurrencyManager.Instance.TrySpendReputation(upgrade.reputationCost)) return false;
+
+            _purchasedReputationUpgrades.Add(upgrade);
+            CurrencyManager.Instance.ReputationMultiplier *= upgrade.permanentMultiplier;
+            OnReputationUpgradePurchased?.Invoke(upgrade);
+            SaveGame();
+            return true;
+        }
+
         // --- IPO / Prestige ---
+
+        /// <summary>Lifetime count of completed IPOs - drives the AchievementManager's IPOCount requirement. Never reset.</summary>
+        public int IPOCount { get; private set; }
+
+        // --- Onboarding ---
+
+        /// <summary>True once the player has finished (or skipped) the first-launch coach-mark sequence. Never reset.</summary>
+        public bool OnboardingCompleted { get; private set; }
+
+        public void CompleteOnboarding()
+        {
+            if (OnboardingCompleted) return;
+            OnboardingCompleted = true;
+            SaveGame();
+        }
+
+        // --- In-app purchases ---
+
+        /// <summary>True once the player has bought a "remove ads" product. Never reset -
+        /// set by IAPManager.GrantReward, persisted here alongside every other permanent flag.</summary>
+        public bool AdsRemoved { get; private set; }
+
+        public void SetAdsRemoved(bool value)
+        {
+            if (AdsRemoved == value) return;
+            AdsRemoved = value;
+            SaveGame();
+        }
 
         public bool CanIPO(double minimumLifetimeRevenue)
         {
@@ -195,6 +273,7 @@ namespace AIStartupTycoon.Core
         public double ExecuteIPO()
         {
             double reputationGained = CurrencyManager.Instance.ExecuteIPO();
+            IPOCount++;
 
             // Reset run-scoped state; Reputation and its multiplier persist.
             foreach (var key in _ownedEngineers.Keys.ToList()) _ownedEngineers[key] = 0;
@@ -227,21 +306,32 @@ namespace AIStartupTycoon.Core
                 CurrencyManager.Instance.EarnFromPassive(passivePerSecond, (float)(secondsAway * offlineEarningsRate));
                 BigNumber earned = CurrencyManager.Instance.CurrentRevenue - before;
 
-                OnOfflineEarningsApplied?.Invoke(earned); // UI subscribes to show "Welcome back! +$X" popup
+                OnOfflineEarningsApplied?.Invoke(earned, secondsAway); // UI subscribes to show "Welcome back! +$X" popup
             }
         }
 
-        private void OnApplicationQuit() => SaveGame();
+        // _hasLoaded guards both of these: a pause/quit event that fires before Start()
+        // has run LoadGame() would otherwise SaveGame() with Awake()'s still-default,
+        // zeroed-out state, silently overwriting the player's real save file.
+        private void OnApplicationQuit()
+        {
+            if (_hasLoaded) SaveGame();
+        }
 
         private void OnApplicationPause(bool pauseStatus)
         {
-            if (pauseStatus) SaveGame();
+            if (pauseStatus && _hasLoaded) SaveGame();
         }
 
         // --- Save/Load (real JSON implementation via SaveSystem) ---
 
         public void SaveGame()
         {
+            // CurrencyManager can already be torn down by the time this fires - e.g. object
+            // destruction order during a real app quit, or the editor's exit-play-mode pass -
+            // in which case there's nothing valid left to save.
+            if (CurrencyManager.Instance == null) return;
+
             var data = new SaveData
             {
                 revenueMantissa = CurrencyManager.Instance.CurrentRevenue.Mantissa,
@@ -255,7 +345,11 @@ namespace AIStartupTycoon.Core
                 passiveOutputMultiplier = CurrencyManager.Instance.PassiveOutputMultiplier,
                 reputationMultiplier = CurrencyManager.Instance.ReputationMultiplier,
 
-                lastQuitTimestampUtc = DateTime.UtcNow.ToString("o")
+                lastQuitTimestampUtc = DateTime.UtcNow.ToString("o"),
+
+                totalClicks = CurrencyManager.Instance.TotalClicks,
+                ipoCount = IPOCount,
+                onboardingCompleted = OnboardingCompleted
             };
 
             foreach (var kvp in _ownedEngineers)
@@ -265,6 +359,27 @@ namespace AIStartupTycoon.Core
             }
             foreach (var tier in _unlockedTiers) data.unlockedModelTierNames.Add(tier.name);
             foreach (var upg in _purchasedUpgrades) data.purchasedUpgradeNames.Add(upg.name);
+            foreach (var upg in _purchasedReputationUpgrades) data.purchasedReputationUpgradeNames.Add(upg.name);
+            if (Systems.AchievementManager.Instance != null)
+                data.unlockedAchievementNames = Systems.AchievementManager.Instance.GetUnlockedNames();
+
+            if (DailyLoginManager.Instance != null)
+            {
+                var (lastClaimedDateUtc, nextRewardDay) = DailyLoginManager.Instance.GetSaveState();
+                data.dailyLoginLastClaimedDateUtc = lastClaimedDateUtc;
+                data.dailyLoginNextRewardDay = nextRewardDay;
+            }
+
+            if (Systems.QuestManager.Instance != null)
+            {
+                var (templateNames, snapshots, expiries) = Systems.QuestManager.Instance.GetSaveState();
+                data.questTemplateNames = templateNames;
+                data.questSnapshotValues = snapshots;
+                data.questExpiresAtUtc = expiries;
+            }
+
+            data.adsRemoved = AdsRemoved;
+            if (IAPManager.Instance != null) data.ownedIAPProductIds = IAPManager.Instance.GetOwnedProductIds();
 
             SaveSystem.Save(data);
         }
@@ -277,7 +392,10 @@ namespace AIStartupTycoon.Core
             CurrencyManager.Instance.LoadState(
                 data.revenueMantissa, data.revenueExponent,
                 data.lifetimeRevenueMantissa, data.lifetimeRevenueExponent,
-                data.reputation);
+                data.reputation, data.totalClicks);
+
+            IPOCount = data.ipoCount;
+            OnboardingCompleted = data.onboardingCompleted;
 
             CurrencyManager.Instance.ClickPowerBase = data.clickPowerBase > 0 ? data.clickPowerBase : 1.0;
             CurrencyManager.Instance.GlobalEarningsMultiplier = data.globalEarningsMultiplier > 0 ? data.globalEarningsMultiplier : 1.0;
@@ -305,6 +423,23 @@ namespace AIStartupTycoon.Core
                 var upg = allComputeUpgrades.FirstOrDefault(u => u.name == name);
                 if (upg != null) _purchasedUpgrades.Add(upg);
             }
+            foreach (var name in data.purchasedReputationUpgradeNames)
+            {
+                var upg = allReputationUpgrades.FirstOrDefault(u => u.name == name);
+                if (upg != null) _purchasedReputationUpgrades.Add(upg);
+            }
+
+            if (Systems.AchievementManager.Instance != null)
+                Systems.AchievementManager.Instance.LoadUnlockedNames(data.unlockedAchievementNames);
+
+            if (DailyLoginManager.Instance != null)
+                DailyLoginManager.Instance.LoadSaveState(data.dailyLoginLastClaimedDateUtc, data.dailyLoginNextRewardDay);
+
+            if (Systems.QuestManager.Instance != null)
+                Systems.QuestManager.Instance.LoadSaveState(data.questTemplateNames, data.questSnapshotValues, data.questExpiresAtUtc);
+
+            AdsRemoved = data.adsRemoved;
+            if (IAPManager.Instance != null) IAPManager.Instance.LoadOwnedProductIds(data.ownedIAPProductIds);
         }
     }
 }

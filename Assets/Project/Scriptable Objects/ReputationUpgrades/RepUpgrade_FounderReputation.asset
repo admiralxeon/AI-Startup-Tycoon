@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ffe637d8d147dc45bfaa7c66f481136, type: 3}
+  m_Name: RepUpgrade_FounderReputation
+  m_EditorClassIdentifier: Assembly-CSharp::AIStartupTycoon.Data.ReputationUpgradeData
+  upgradeName: Founder Reputation
+  description: You've done this before, and it shows. Permanent +15% to all earnings.
+  icon: {fileID: 21300000, guid: 4cd81b1e06587934892fa1f5fffa2506, type: 3}
+  reputationCost: 6
+  permanentMultiplier: 1.15
+  prerequisite: {fileID: 11400000, guid: db55f57203562684da562bd8f5c63dbc, type: 2}

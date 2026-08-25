@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::AIStartupTycoon.Data.ComputeUpgradeData
   upgradeName: Custom Silicon
   description: Design your own chips. Very Silicon Valley of you.
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 257dc6ba63b38504189c5114c4a6be9c, type: 3}
   cost: 750000
   effectType: 0
   multiplierValue: 2
