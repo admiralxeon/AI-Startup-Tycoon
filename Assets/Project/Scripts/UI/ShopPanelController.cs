@@ -19,6 +19,7 @@ namespace AIStartupTycoon.UI
         public AchievementShopRow achievementRowPrefab;
         public QuestShopRow questRowPrefab;
         public IAPShopRow iapRowPrefab;
+        public ModelTierShopRow modelTierRowPrefab;
 
         [Header("Containers (assign the 'Content' object of each ScrollRect)")]
         public Transform engineerListContainer;
@@ -27,6 +28,7 @@ namespace AIStartupTycoon.UI
         public Transform achievementListContainer;
         public Transform questListContainer;
         public Transform storeListContainer;
+        public Transform modelTierListContainer;
 
         private void Start()
         {
@@ -35,6 +37,7 @@ namespace AIStartupTycoon.UI
             SpawnReputationUpgradeRows();
             SpawnAchievementRows();
             SpawnIAPRows();
+            SpawnModelTierRows();
             // Deferred one frame: unlike the other Spawn* calls above (whose data comes from
             // Inspector-serialized fields, ready the instant their singleton's Awake() runs),
             // QuestManager also depends on GameManager.LoadGame() having restored slot state,
@@ -103,6 +106,12 @@ namespace AIStartupTycoon.UI
                 QuestShopRow row = Instantiate(questRowPrefab, questListContainer);
                 row.Initialize(i);
             }
+
+            // The "daily reward ready" card is a static scene child of this same container
+            // (not spawned here), so it starts out ahead of these freshly-instantiated rows
+            // in sibling order - push it below them to match the mockup's bottom-of-list spot.
+            Transform dailyRewardCard = questListContainer.Find("DailyRewardQuestCard");
+            if (dailyRewardCard != null) dailyRewardCard.SetAsLastSibling();
         }
 
         private void SpawnIAPRows()
@@ -114,6 +123,17 @@ namespace AIStartupTycoon.UI
                 if (product == null) continue;
                 IAPShopRow row = Instantiate(iapRowPrefab, storeListContainer);
                 row.Initialize(product);
+            }
+        }
+
+        private void SpawnModelTierRows()
+        {
+            if (GameManager.Instance == null || GameManager.Instance.allModelTiers == null || modelTierRowPrefab == null) return;
+
+            foreach (ModelTierData tier in GameManager.Instance.allModelTiers)
+            {
+                ModelTierShopRow row = Instantiate(modelTierRowPrefab, modelTierListContainer);
+                row.Initialize(tier);
             }
         }
     }

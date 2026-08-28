@@ -7,23 +7,27 @@ using AIStartupTycoon.Core;
 namespace AIStartupTycoon.UI
 {
     /// <summary>
-    /// Settings modal: music/SFX toggles, replay-tutorial, and a reset-progress action
-    /// (gated behind its own confirm step, since it's destructive and irreversible).
+    /// Settings screen: a permanent bottom-nav tab (see MainNavController), not a
+    /// dismissible modal - it has no open/close of its own, just music/SFX/haptics/
+    /// idle-notification toggles, replay-tutorial, and a reset-progress action (gated
+    /// behind its own confirm step, since it's destructive and irreversible).
     /// </summary>
     public class SettingsPanelController : MonoBehaviour
     {
         [Header("Panel")]
         public GameObject panelRoot;
-        public Button openButton;
-        public Button closeButton;
+        [Tooltip("Used to switch back to the HQ tab before starting the tutorial replay, since this screen no longer has its own close/dismiss.")]
+        public MainNavController mainNavController;
 
-        [Header("Audio Toggles")]
+        [Header("Toggles")]
         public Button musicToggleButton;
-        public Image musicToggleImage;
-        public TMP_Text musicToggleLabel;
+        public ToggleSwitchView musicToggleView;
         public Button sfxToggleButton;
-        public Image sfxToggleImage;
-        public TMP_Text sfxToggleLabel;
+        public ToggleSwitchView sfxToggleView;
+        public Button hapticsToggleButton;
+        public ToggleSwitchView hapticsToggleView;
+        public Button idleNotifToggleButton;
+        public ToggleSwitchView idleNotifToggleView;
 
         [Header("Actions")]
         public Button replayTutorialButton;
@@ -38,40 +42,20 @@ namespace AIStartupTycoon.UI
         public Button resetConfirmButton;
         public Button resetCancelButton;
 
-        [Header("Toggle Colors")]
-        public Color onColor = new Color(0.2f, 0.7f, 0.35f);
-        public Color offColor = new Color(0.35f, 0.37f, 0.42f);
-
         private void Start()
         {
-            openButton.onClick.AddListener(Open);
-            closeButton.onClick.AddListener(Close);
             musicToggleButton.onClick.AddListener(ToggleMusic);
             sfxToggleButton.onClick.AddListener(ToggleSfx);
+            if (hapticsToggleButton != null) hapticsToggleButton.onClick.AddListener(ToggleHaptics);
+            if (idleNotifToggleButton != null) idleNotifToggleButton.onClick.AddListener(ToggleIdleNotifications);
             replayTutorialButton.onClick.AddListener(ReplayTutorial);
             resetProgressButton.onClick.AddListener(() => resetConfirmRoot.SetActive(true));
             if (exitGameButton != null) exitGameButton.onClick.AddListener(OpenExitConfirm);
             resetConfirmButton.onClick.AddListener(ConfirmReset);
             resetCancelButton.onClick.AddListener(() => resetConfirmRoot.SetActive(false));
 
-            panelRoot.SetActive(false);
             if (resetConfirmRoot != null) resetConfirmRoot.SetActive(false);
             RefreshToggles();
-        }
-
-        private void Open()
-        {
-            panelRoot.SetActive(true);
-            RefreshToggles();
-            if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTap();
-        }
-
-        public void Close()
-        {
-            panelRoot.SetActive(false);
-            if (resetConfirmRoot != null) resetConfirmRoot.SetActive(false);
-            if (exitConfirmPanel != null) exitConfirmPanel.SetActive(false);
-            if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTap();
         }
 
         private void ToggleMusic()
@@ -89,20 +73,35 @@ namespace AIStartupTycoon.UI
             RefreshToggles();
         }
 
+        private void ToggleHaptics()
+        {
+            if (HapticsManager.Instance == null) return;
+            bool turningOn = !HapticsManager.Instance.HapticsEnabled;
+            HapticsManager.Instance.SetHapticsEnabled(turningOn);
+            if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTap();
+            if (turningOn) HapticsManager.Instance.Vibrate(); // felt confirmation only when turning on
+            RefreshToggles();
+        }
+
+        private void ToggleIdleNotifications()
+        {
+            if (NotificationManager.Instance == null) return;
+            NotificationManager.Instance.SetNotificationsEnabled(!NotificationManager.Instance.NotificationsEnabled);
+            if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTap();
+            RefreshToggles();
+        }
+
         private void RefreshToggles()
         {
-            bool music = UIAudioManager.Instance.MusicEnabled;
-            bool sfx = UIAudioManager.Instance.SfxEnabled;
-
-            if (musicToggleLabel != null) musicToggleLabel.text = music ? "ON" : "OFF";
-            if (musicToggleImage != null) musicToggleImage.color = music ? onColor : offColor;
-            if (sfxToggleLabel != null) sfxToggleLabel.text = sfx ? "ON" : "OFF";
-            if (sfxToggleImage != null) sfxToggleImage.color = sfx ? onColor : offColor;
+            if (musicToggleView != null) musicToggleView.SetState(UIAudioManager.Instance.MusicEnabled);
+            if (sfxToggleView != null) sfxToggleView.SetState(UIAudioManager.Instance.SfxEnabled);
+            if (hapticsToggleView != null && HapticsManager.Instance != null) hapticsToggleView.SetState(HapticsManager.Instance.HapticsEnabled);
+            if (idleNotifToggleView != null && NotificationManager.Instance != null) idleNotifToggleView.SetState(NotificationManager.Instance.NotificationsEnabled);
         }
 
         private void ReplayTutorial()
         {
-            Close();
+            if (mainNavController != null) mainNavController.Show(0); // back to HQ, so the tutorial highlights land on real targets
             if (onboardingController != null) onboardingController.Begin();
         }
 

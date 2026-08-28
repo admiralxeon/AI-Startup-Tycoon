@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using AIStartupTycoon.Core;
 using AIStartupTycoon.Utils;
+using AIStartupTycoon.Data;
 using TMPro;
 
 namespace AIStartupTycoon.UI
@@ -14,6 +15,24 @@ namespace AIStartupTycoon.UI
         public TMP_Text passiveRateLabel;
         public TMP_Text valuationLabel;
         public TMP_Text reputationLabel;
+
+        [Header("Level Badge (cosmetic only - not a real game system)")]
+        // Purely a UI flourish derived from lifetime revenue, same idea as stageLabel above
+        // (Seed/Series A/B/C) but presented as a level number + progress ring for the chunky
+        // HUD's level badge. No save data, no economy effect, nothing else reads this.
+        public TMP_Text levelLabel;
+        public Image levelXpFill; // Image with Fill Amount type = Horizontal
+
+        [Header("Top Bar Headcount Chip")]
+        // Separate from headcountLabel below (that one lives in the Company stats grid) -
+        // the mockup also shows headcount as its own top-bar chip next to Reputation.
+        public TMP_Text headcountChipLabel;
+
+        [Header("Office Card Badges")]
+        // "OFFICE - FLOOR N" (purely cosmetic, derived from headcount) and the current
+        // (highest unlocked) model tier + its multiplier, e.g. "Vision Model - x1.75".
+        public TMP_Text officeFloorLabel;
+        public TMP_Text officeTierLabel;
 
         [Header("Company Column")]
         public TMP_Text featuresLabel;
@@ -58,9 +77,52 @@ namespace AIStartupTycoon.UI
         private void RefreshAll()
         {
             RefreshHeader();
+            RefreshLevelBadge();
             RefreshCompanyColumn();
             RefreshMilestone();
             RefreshRates();
+            RefreshOfficeBadges();
+        }
+
+        private void RefreshOfficeBadges()
+        {
+            var gm = GameManager.Instance;
+            int headcount = gm.GetTotalHeadcount();
+
+            if (headcountChipLabel != null) headcountChipLabel.text = headcount.ToString("N0");
+
+            if (officeFloorLabel != null)
+            {
+                int floor = Mathf.Clamp(headcount / 12 + 1, 1, 9);
+                officeFloorLabel.text = $"OFFICE · FLOOR {floor}";
+            }
+
+            if (officeTierLabel != null && gm.allModelTiers != null)
+            {
+                ModelTierData current = null;
+                foreach (var tier in gm.allModelTiers)
+                {
+                    if (!gm.IsModelTierUnlocked(tier)) continue;
+                    if (current == null || tier.unlockRevenueThreshold > current.unlockRevenueThreshold)
+                        current = tier;
+                }
+                officeTierLabel.text = current != null
+                    ? $"{current.tierName} · x{current.globalEarningsMultiplier:0.##}"
+                    : "";
+            }
+        }
+
+        private void RefreshLevelBadge()
+        {
+            if (levelLabel == null && levelXpFill == null) return;
+
+            double lifetime = CurrencyManager.Instance.LifetimeRevenue.ToDouble();
+            double progress = System.Math.Log10(System.Math.Max(10, lifetime)) * 2.4;
+            int level = (int)Mathf.Clamp(Mathf.Floor((float)progress) - 2, 1, 99);
+            float xp = Mathf.Clamp01((float)(progress % 1.0));
+
+            if (levelLabel != null) levelLabel.text = level.ToString();
+            if (levelXpFill != null) levelXpFill.fillAmount = Mathf.Max(0.06f, xp);
         }
 
         private void RefreshHeader()
@@ -98,14 +160,14 @@ namespace AIStartupTycoon.UI
                 return;
             }
 
-            nextMilestoneNameLabel.text = tier.tierName.ToUpper();
+            nextMilestoneNameLabel.text = tier.tierName;
             if (nextMilestoneProgressFill != null) nextMilestoneProgressFill.fillAmount = progress;
 
             if (nextMilestoneDetailLabel != null)
             {
                 double lifetime = CurrencyManager.Instance.LifetimeRevenue.ToDouble();
                 nextMilestoneDetailLabel.text =
-                    $"{(BigNumber)lifetime} of {(BigNumber)tier.unlockRevenueThreshold} revenue - unlocks {tier.tierName}";
+                    $"{(BigNumber)lifetime} of {(BigNumber)tier.unlockRevenueThreshold} lifetime revenue";
             }
         }
 

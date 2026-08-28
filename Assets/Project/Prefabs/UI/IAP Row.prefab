@@ -188,8 +188,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: $0.99
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: e47f0c7e790dbff4ab2c2c214734663d, type: 2}
-  m_sharedMaterial: {fileID: 4419551933180135499, guid: e47f0c7e790dbff4ab2c2c214734663d, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: c025dd2fe2320d64bbeec08510d7b6dc, type: 2}
+  m_sharedMaterial: {fileID: 1515596348305280887, guid: c025dd2fe2320d64bbeec08510d7b6dc, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -268,10 +268,9 @@ GameObject:
   m_Component:
   - component: {fileID: 3123572483135578555}
   - component: {fileID: 5537718551543704805}
-  - component: {fileID: 6351683996722999991}
-  - component: {fileID: 4432136054494388819}
   - component: {fileID: 2427796538471639581}
   - component: {fileID: 2002712616143437267}
+  - component: {fileID: 6953522411327170108}
   m_Layer: 0
   m_Name: IAP Row
   m_TagString: Untagged
@@ -311,51 +310,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5153959589491508541}
   m_CullTransparentMesh: 1
---- !u!114 &6351683996722999991
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5153959589491508541}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
-  m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
-  m_RaycastTarget: 1
-  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
-  m_Maskable: 1
-  m_OnCullStateChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: fdeccec006fc24a43837a9eeb8e5298c, type: 3}
-  m_Type: 1
-  m_PreserveAspect: 0
-  m_FillCenter: 1
-  m_FillMethod: 4
-  m_FillAmount: 1
-  m_FillClockwise: 1
-  m_FillOrigin: 0
-  m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 1
---- !u!114 &4432136054494388819
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5153959589491508541}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cfabb0440166ab443bba8876756fdfa9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Shadow
-  m_EffectColor: {r: 0, g: 0, b: 0, a: 0.5}
-  m_EffectDistance: {x: 1, y: -1}
-  m_UseGraphicAlpha: 1
 --- !u!114 &2427796538471639581
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -394,6 +348,29 @@ MonoBehaviour:
   priceLabel: {fileID: 4701411119281808653}
   buyButton: {fileID: 518393120317430177}
   ownedOverlay: {fileID: 5799237510912948989}
+--- !u!114 &6953522411327170108
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5153959589491508541}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ea6973ef46fcbb46ace7c71de11e078, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::AIStartupTycoon.UI.UIRoundedGraphic
+  m_Material: {fileID: 2100000, guid: 17278b1309d7c034c8b22916e2eba286, type: 2}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  cornerRadius: 15
+  borderWidth: 1
+  shadowPadding: 0
 --- !u!1 &5335536395367195537
 GameObject:
   m_ObjectHideFlags: 0
@@ -461,8 +438,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: OWNED
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: e47f0c7e790dbff4ab2c2c214734663d, type: 2}
-  m_sharedMaterial: {fileID: 4419551933180135499, guid: e47f0c7e790dbff4ab2c2c214734663d, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: c025dd2fe2320d64bbeec08510d7b6dc, type: 2}
+  m_sharedMaterial: {fileID: 1515596348305280887, guid: c025dd2fe2320d64bbeec08510d7b6dc, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -598,8 +575,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: de6d33ad7a2eb4443b084bddb85fa696, type: 2}
-  m_sharedMaterial: {fileID: 967187143157068166, guid: de6d33ad7a2eb4443b084bddb85fa696, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: c025dd2fe2320d64bbeec08510d7b6dc, type: 2}
+  m_sharedMaterial: {fileID: 1515596348305280887, guid: c025dd2fe2320d64bbeec08510d7b6dc, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -886,8 +863,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: e47f0c7e790dbff4ab2c2c214734663d, type: 2}
-  m_sharedMaterial: {fileID: 4419551933180135499, guid: e47f0c7e790dbff4ab2c2c214734663d, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: c025dd2fe2320d64bbeec08510d7b6dc, type: 2}
+  m_sharedMaterial: {fileID: 1515596348305280887, guid: c025dd2fe2320d64bbeec08510d7b6dc, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

@@ -81,6 +81,10 @@ namespace AIStartupTycoon.Systems
             return Mathf.Clamp01((float)(GetCurrentValue(achievement.requirementType) / achievement.requirementValue));
         }
 
+        /// <summary>The tracked stat's current raw value (not clamped/normalized) - for the
+        /// shop row's "current/target" pill text on a still-locked achievement.</summary>
+        public double GetCurrentRawValue(AchievementData achievement) => GetCurrentValue(achievement.requirementType);
+
         // --- Save/Load support (called from GameManager, which owns the save file) ---
 
         public List<string> GetUnlockedNames() => _unlocked.Select(a => a.name).ToList();

@@ -122,6 +122,8 @@ namespace AIStartupTycoon.Core
             return (next, Mathf.Clamp01(progress));
         }
 
+        public bool IsModelTierUnlocked(ModelTierData tier) => _unlockedTiers.Contains(tier);
+
         // --- Engineer hiring ---
 
         public int GetOwnedCount(EngineerData engineer) =>

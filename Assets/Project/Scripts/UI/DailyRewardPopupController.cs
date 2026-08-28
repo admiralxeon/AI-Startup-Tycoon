@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -13,6 +12,10 @@ namespace AIStartupTycoon.UI
     /// "surface it, don't make the player go find it" pattern. Dismissing without claiming just
     /// means it reappears the next time DailyLoginManager's state is checked (next launch) -
     /// the reward itself doesn't expire, it just sits there claimable for the rest of the day.
+    /// Shows the full 7-day ladder: days before NextRewardDay read as claimed (this pass through
+    /// the cycle), NextRewardDay itself is claimable now, everything after is locked. A wrap
+    /// back to day 1 after completing day 7 correctly reads as "nothing claimed yet" - a fresh
+    /// lap, not a bug.
     /// </summary>
     public class DailyRewardPopupController : MonoBehaviour
     {
@@ -20,10 +23,11 @@ namespace AIStartupTycoon.UI
         public GameObject panelRoot;
 
         [Header("Content")]
-        public TMP_Text dayLabel;
-        public Image icon;
-        public TMP_Text rewardSummaryLabel;
+        public TMP_Text titleLabel;
+        public TMP_Text subtitleLabel;
+        public DailyRewardTileView[] tiles; // exactly rewardCycle.Count, in day order
         public Button claimButton;
+        public TMP_Text claimButtonLabel;
         public Button closeButton; // dismiss without claiming
 
         private void Start()
@@ -50,23 +54,40 @@ namespace AIStartupTycoon.UI
             DailyRewardData reward = mgr.PeekNextReward();
             if (reward == null) return;
 
-            if (dayLabel != null)
-                dayLabel.text = string.IsNullOrEmpty(reward.dayLabel) ? $"Day {mgr.NextRewardDay}" : reward.dayLabel;
-            if (icon != null && reward.icon != null) icon.sprite = reward.icon;
-            if (rewardSummaryLabel != null) rewardSummaryLabel.text = BuildSummary(reward);
+            int cycleLength = mgr.rewardCycle != null ? mgr.rewardCycle.Count : 0;
+            if (subtitleLabel != null)
+                subtitleLabel.text = $"Day {mgr.NextRewardDay} of {cycleLength} · miss a day and the ladder restarts";
+
+            RefreshTiles(mgr);
+
+            if (claimButtonLabel != null) claimButtonLabel.text = $"CLAIM {BuildShortRewardText(reward)}";
 
             if (panelRoot != null) panelRoot.SetActive(true);
             if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTap();
         }
 
-        private static string BuildSummary(DailyRewardData reward)
+        private void RefreshTiles(DailyLoginManager mgr)
         {
-            var parts = new List<string>();
-            if (reward.cashReward > 0) parts.Add($"+${(BigNumber)reward.cashReward}");
-            if (reward.reputationReward > 0) parts.Add($"+{reward.reputationReward:N1} Reputation");
-            if (reward.temporaryEarningsMultiplier != 1.0)
-                parts.Add($"{reward.temporaryEarningsMultiplier:0.0}x earnings for {reward.boostDurationSeconds:N0}s");
-            return string.Join("   •   ", parts);
+            if (tiles == null || mgr.rewardCycle == null) return;
+            for (int i = 0; i < tiles.Length && i < mgr.rewardCycle.Count; i++)
+            {
+                int day = i + 1;
+                DailyRewardData data = mgr.rewardCycle[i];
+                DailyRewardTileState state = day < mgr.NextRewardDay ? DailyRewardTileState.Claimed
+                    : day == mgr.NextRewardDay ? DailyRewardTileState.Current
+                    : DailyRewardTileState.Locked;
+
+                string dayText = string.IsNullOrEmpty(data.dayLabel) ? $"D{day}" : data.dayLabel;
+                tiles[i].SetState(state, dayText, BuildShortRewardText(data));
+            }
+        }
+
+        private static string BuildShortRewardText(DailyRewardData reward)
+        {
+            if (reward.cashReward > 0) return $"${(BigNumber)reward.cashReward}";
+            if (reward.reputationReward > 0) return $"{reward.reputationReward:0.#} REP";
+            if (reward.temporaryEarningsMultiplier != 1.0) return $"{reward.temporaryEarningsMultiplier:0.#}x";
+            return "—";
         }
 
         private void OnClaimPressed()

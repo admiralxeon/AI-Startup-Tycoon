@@ -17,6 +17,7 @@ namespace AIStartupTycoon.UI
         public Image icon;
         public TMP_Text nameLabel;
         public TMP_Text descriptionLabel;
+        public TMP_Text rewardLabel;        // e.g. "Reward: $12.5K"
         public TMP_Text progressLabel;      // e.g. "3 / 10"
         public Image progressFill;          // Image with Fill Amount type = Horizontal
         public TMP_Text timeRemainingLabel;
@@ -44,6 +45,7 @@ namespace AIStartupTycoon.UI
 
             if (icon != null) icon.sprite = data.icon;
             if (nameLabel != null) nameLabel.text = data.questName;
+            if (rewardLabel != null) rewardLabel.text = GetRewardText(data);
 
             double raw = QuestManager.Instance.GetSlotProgressRaw(_slotIndex);
             double target = data.targetAmount;
@@ -63,6 +65,19 @@ namespace AIStartupTycoon.UI
         {
             if (QuestManager.Instance == null || !QuestManager.Instance.TryClaimSlot(_slotIndex)) return;
             if (Core.UIAudioManager.Instance != null) Core.UIAudioManager.Instance.PlayTap();
+        }
+
+        private static string GetRewardText(AIStartupTycoon.Data.QuestData data)
+        {
+            var parts = new System.Collections.Generic.List<string>();
+            if (data.cashReward > 0) parts.Add($"${FormatNumber(data.cashReward)}");
+            if (data.reputationReward > 0) parts.Add($"{data.reputationReward:0.#} Reputation");
+            if (data.temporaryEarningsMultiplier > 1.0)
+            {
+                int minutes = Mathf.RoundToInt(data.boostDurationSeconds / 60f);
+                parts.Add($"{data.temporaryEarningsMultiplier:0.#}x earnings, {minutes} min");
+            }
+            return "Reward: " + string.Join(", ", parts);
         }
 
         private static string FormatNumber(double amount)

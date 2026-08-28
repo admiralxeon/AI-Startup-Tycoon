@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 namespace AIStartupTycoon.UI
 {
@@ -18,20 +19,31 @@ namespace AIStartupTycoon.UI
         public Button achievementsTabButton;
         public Button questsTabButton;
         public Button storeTabButton;
+        public Button modelsTabButton;
 
-        [Header("Panels (the existing Engineer/Upgrade/Prestige/Achievements/Quests/Store ScrollViews)")]
+        [Header("Panels (the existing Engineer/Upgrade/Prestige/Achievements/Quests/Store/Models ScrollViews)")]
         public GameObject teamPanel;
         public GameObject computePanel;
         public GameObject prestigePanel;
         public GameObject achievementsPanel;
         public GameObject questsPanel;
         public GameObject storePanel;
+        public GameObject modelsPanel;
 
         [Header("Tab Visual States")]
         [Tooltip("Applied to the active tab button's Image component.")]
         public Color activeTabColor = new Color(0.29f, 0.29f, 0.87f); // indigo, matches mockup
         [Tooltip("Applied to the inactive tab button's Image component.")]
         public Color inactiveTabColor = new Color(0.3f, 0.3f, 0.35f);
+        public Color activeLabelColor = Color.white;
+        public Color inactiveLabelColor = new Color(0.39f, 0.45f, 0.55f); // #64748B
+
+        [Header("Category Subtitle (optional)")]
+        public TMP_Text categorySubtitleLabel;
+        [TextArea] public string teamSubtitle = "Engineers ship whether the app is open or not. Cost climbs 15% per hire.";
+        [TextArea] public string computeSubtitle = "Compute upgrades boost every engineer's output at once.";
+        [TextArea] public string modelsSubtitle = "Unlock stronger models as your lifetime revenue grows.";
+        [TextArea] public string prestigeSubtitle = "Spend reputation on permanent, run-spanning bonuses.";
 
         [Header("Tab Badge (optional)")]
         public GameObject computeTabBadge;
@@ -49,6 +61,7 @@ namespace AIStartupTycoon.UI
             if (achievementsTabButton != null) achievementsTabButton.onClick.AddListener(ShowAchievementsTab);
             if (questsTabButton != null) questsTabButton.onClick.AddListener(ShowQuestsTab);
             if (storeTabButton != null) storeTabButton.onClick.AddListener(ShowStoreTab);
+            if (modelsTabButton != null) modelsTabButton.onClick.AddListener(ShowModelsTab);
             ShowTeamTab(); // default open tab
         }
 
@@ -84,21 +97,24 @@ namespace AIStartupTycoon.UI
             }
         }
 
-        public void ShowTeamTab() => ShowTab(teamPanel, teamTabButton);
-        public void ShowComputeTab() => ShowTab(computePanel, computeTabButton);
-        public void ShowPrestigeTab() => ShowTab(prestigePanel, prestigeTabButton);
-        public void ShowAchievementsTab() => ShowTab(achievementsPanel, achievementsTabButton);
-        public void ShowQuestsTab() => ShowTab(questsPanel, questsTabButton);
-        public void ShowStoreTab() => ShowTab(storePanel, storeTabButton);
+        public void ShowTeamTab() => ShowTab(teamPanel, teamTabButton, teamSubtitle);
+        public void ShowComputeTab() => ShowTab(computePanel, computeTabButton, computeSubtitle);
+        public void ShowPrestigeTab() => ShowTab(prestigePanel, prestigeTabButton, prestigeSubtitle);
+        public void ShowAchievementsTab() => ShowTab(achievementsPanel, achievementsTabButton, "");
+        public void ShowQuestsTab() => ShowTab(questsPanel, questsTabButton, "");
+        public void ShowStoreTab() => ShowTab(storePanel, storeTabButton, "");
+        public void ShowModelsTab() => ShowTab(modelsPanel, modelsTabButton, modelsSubtitle);
 
-        private void ShowTab(GameObject panelToShow, Button buttonToActivate)
+        private void ShowTab(GameObject panelToShow, Button buttonToActivate, string subtitle)
         {
+            if (categorySubtitleLabel != null) categorySubtitleLabel.text = subtitle;
             SetPanelActive(teamPanel, panelToShow);
             SetPanelActive(computePanel, panelToShow);
             SetPanelActive(prestigePanel, panelToShow);
             SetPanelActive(achievementsPanel, panelToShow);
             SetPanelActive(questsPanel, panelToShow);
             SetPanelActive(storePanel, panelToShow);
+            SetPanelActive(modelsPanel, panelToShow);
 
             SetTabVisual(teamTabButton, teamTabButton == buttonToActivate);
             SetTabVisual(computeTabButton, computeTabButton == buttonToActivate);
@@ -106,6 +122,7 @@ namespace AIStartupTycoon.UI
             SetTabVisual(achievementsTabButton, achievementsTabButton == buttonToActivate);
             SetTabVisual(questsTabButton, questsTabButton == buttonToActivate);
             SetTabVisual(storeTabButton, storeTabButton == buttonToActivate);
+            SetTabVisual(modelsTabButton, modelsTabButton == buttonToActivate);
 
             if (Core.UIAudioManager.Instance != null) Core.UIAudioManager.Instance.PlaySwitch();
         }
@@ -118,8 +135,11 @@ namespace AIStartupTycoon.UI
         private void SetTabVisual(Button button, bool active)
         {
             if (button == null) return;
-            Image img = button.GetComponent<Image>();
+            Graphic img = button.GetComponent<Graphic>();
             if (img != null) img.color = active ? activeTabColor : inactiveTabColor;
+
+            TMP_Text label = button.GetComponentInChildren<TMP_Text>();
+            if (label != null) label.color = active ? activeLabelColor : inactiveLabelColor;
         }
     }
 }

@@ -21,6 +21,7 @@ namespace AIStartupTycoon.UI
         public TMP_Text projectedReputationLabel;
         public TMP_Text currentReputationLabel;
         public TMP_Text minimumRevenueWarningLabel; // shown if not yet eligible
+        public GameObject minimumRevenueWarningBG;  // its card background, toggled alongside it
 
         [Header("Buttons")]
         public Button openIPOButton;   // e.g. a persistent "IPO" button on the main screen
@@ -78,13 +79,15 @@ namespace AIStartupTycoon.UI
                 : "Not yet eligible";
 
             confirmIPOButton.interactable = eligible;
+            confirmIPOButton.gameObject.SetActive(eligible);
 
             if (minimumRevenueWarningLabel != null)
             {
                 minimumRevenueWarningLabel.gameObject.SetActive(!eligible);
                 if (!eligible)
-                    minimumRevenueWarningLabel.text = $"Reach ${minimumLifetimeRevenueToIPO:N0} lifetime revenue to IPO";
+                    minimumRevenueWarningLabel.text = $"REACH ${minimumLifetimeRevenueToIPO:N0} LIFETIME REVENUE";
             }
+            if (minimumRevenueWarningBG != null) minimumRevenueWarningBG.SetActive(!eligible);
         }
 
         /// <summary>
@@ -97,7 +100,9 @@ namespace AIStartupTycoon.UI
             return System.Math.Sqrt(lifetimeRevenue / 10000.0);
         }
 
-        private void OnCancelPressed()
+        /// <summary>Public so the header's back-arrow button can share this same handler
+        /// instead of duplicating dismiss logic.</summary>
+        public void OnCancelPressed()
         {
             if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTap();
             HidePanel();
@@ -115,7 +120,7 @@ namespace AIStartupTycoon.UI
 
         private void ShowResults(double reputationGained)
         {
-            Handheld.Vibrate(); // IPO is a major, infrequent milestone - worth the haptic hit
+            if (HapticsManager.Instance != null) HapticsManager.Instance.Vibrate(); // IPO is a major, infrequent milestone - worth the haptic hit
 
             if (confirmContentRoot != null) confirmContentRoot.SetActive(false);
             confirmIPOButton.interactable = true; // reset for next time the panel opens

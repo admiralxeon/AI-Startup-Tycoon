@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using AIStartupTycoon.Core;
 using AIStartupTycoon.Data;
+using AIStartupTycoon.Utils;
 using TMPro;
 
 namespace AIStartupTycoon.UI
@@ -14,11 +15,12 @@ namespace AIStartupTycoon.UI
     public class EngineerShopRow : MonoBehaviour
     {
         [Header("UI References (wire up on the prefab)")]
-        public Image icon;
+        public TMP_Text monogramLabel; // 2-3 letter avatar badge, e.g. "SR"
         public TMP_Text nameLabel;
-        public TMP_Text costLabel;
-        public TMP_Text ownedLabel;
-        public TMP_Text outputLabel;
+        public TMP_Text ownedLabel; // small "x{n}" badge next to the name
+        public TMP_Text descriptionLabel; // EngineerData.flavorText
+        public TMP_Text rateLabel; // "{perUnit}/s each - {total}/s total"
+        public TMP_Text costLabel; // lives on the buy button itself
         public Button buyButton;
         public GameObject lockedOverlay; // shown/hidden based on unlock state
         public TMP_Text lockedRequirementLabel; // caption on the locked overlay itself
@@ -28,8 +30,9 @@ namespace AIStartupTycoon.UI
         public void Initialize(EngineerData data)
         {
             _data = data;
-            if (icon != null) icon.sprite = data.icon;
             nameLabel.text = data.engineerName;
+            if (monogramLabel != null) monogramLabel.text = GetMonogram(data.engineerName);
+            if (descriptionLabel != null) descriptionLabel.text = data.flavorText;
             buyButton.onClick.AddListener(OnBuyClicked);
             Refresh();
         }
@@ -57,9 +60,10 @@ namespace AIStartupTycoon.UI
             // fully hide row content behind it) is what communicates the unlock requirement;
             // this used to duplicate that same message here too, which the overlay's ~80%
             // opacity wasn't quite opaque enough to hide, so the two texts visibly collided.
-            costLabel.text = $"${cost:N0}";
+            costLabel.text = $"${(BigNumber)cost}";
             ownedLabel.text = $"x{owned}";
-            outputLabel.text = $"{_data.GetOutputForCount(owned):N1}/sec";
+            if (rateLabel != null)
+                rateLabel.text = $"{(BigNumber)_data.baseOutputPerSecond}/s each · {(BigNumber)_data.GetOutputForCount(owned)}/s total";
         }
 
         private void OnBuyClicked()
@@ -67,6 +71,23 @@ namespace AIStartupTycoon.UI
             if (GameManager.Instance.TryHireEngineer(_data))
             {
                 if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTap();
+            }
+        }
+
+        private static string GetMonogram(string name)
+        {
+            switch (name)
+            {
+                case "Intern": return "IN";
+                case "Junior Dev": return "JR";
+                case "Senior Dev": return "SR";
+                case "Staff Engineer": return "ST";
+                case "10x Engineer": return "10X";
+                default:
+                    var words = name.Split(' ');
+                    return words.Length >= 2
+                        ? $"{words[0][0]}{words[1][0]}".ToUpper()
+                        : name.Substring(0, Mathf.Min(2, name.Length)).ToUpper();
             }
         }
     }

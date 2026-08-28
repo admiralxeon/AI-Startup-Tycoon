@@ -61,7 +61,7 @@ namespace AIStartupTycoon.UI
 
                 if (panelRoot != null) panelRoot.SetActive(true);
                 if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTap();
-                Handheld.Vibrate(); // rare/celebratory - unlike click feedback, safe to fire every time
+                if (HapticsManager.Instance != null) HapticsManager.Instance.Vibrate(); // rare/celebratory - unlike click feedback, safe to fire every time
 
                 yield return new WaitForSeconds(displayDuration);
 

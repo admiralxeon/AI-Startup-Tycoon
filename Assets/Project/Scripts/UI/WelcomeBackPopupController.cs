@@ -7,8 +7,8 @@ using AIStartupTycoon.Utils;
 namespace AIStartupTycoon.UI
 {
     /// <summary>
-    /// Shows a "Welcome back! +$X while you were away" popup once per launch, driven
-    /// by GameManager.OnOfflineEarningsApplied. GameManager defers that event by one
+    /// Shows a "while you were out" popup once per launch, driven by
+    /// GameManager.OnOfflineEarningsApplied. GameManager defers that event by one
     /// frame specifically so this component's Start() has time to subscribe first.
     /// </summary>
     public class WelcomeBackPopupController : MonoBehaviour
@@ -16,7 +16,9 @@ namespace AIStartupTycoon.UI
         [Header("UI")]
         public GameObject panelRoot;
         public TMP_Text earnedLabel;
-        public TMP_Text awayLabel;
+        public TMP_Text descriptionLabel;
+        public TMP_Text rateLabel;
+        public TMP_Text cappedAtLabel;
         public Button continueButton;
 
         private void Start()
@@ -36,8 +38,20 @@ namespace AIStartupTycoon.UI
         {
             if (earned.ToDouble() <= 0) return; // fresh save, or no passive income yet - nothing to celebrate
 
+            GameManager gm = GameManager.Instance;
+            int ratePercent = Mathf.RoundToInt(gm.offlineEarningsRate * 100f);
+            int capHours = Mathf.RoundToInt(gm.maxOfflineHours);
+
             if (earnedLabel != null) earnedLabel.text = $"+${earned}";
-            if (awayLabel != null) awayLabel.text = $"while you were away for {FormatDuration(secondsAway)}";
+            if (descriptionLabel != null)
+                descriptionLabel.text = $"Your engineers shipped for {FormatDuration(secondsAway)}. Offline output runs at {ratePercent}%, capped at {capHours} hours.";
+
+            if (rateLabel != null)
+            {
+                BigNumber effectiveRate = (BigNumber)(gm.GetTotalPassiveOutput().ToDouble() * gm.offlineEarningsRate);
+                rateLabel.text = $"${effectiveRate}/s";
+            }
+            if (cappedAtLabel != null) cappedAtLabel.text = $"{capHours}h 00m";
 
             if (panelRoot != null) panelRoot.SetActive(true);
             if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTap();

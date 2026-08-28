@@ -18,15 +18,20 @@ namespace AIStartupTycoon.Core
         public static NotificationManager Instance { get; private set; }
 
         private const string ChannelId = "aistartuptycoon_reminders";
+        private const string EnabledKey = "AIST_IdleNotificationsEnabled";
 
         [Header("Reminder Timing")]
         [Tooltip("How long after the player leaves before the reminder fires.")]
         public float reminderDelayHours = 4f;
 
+        public bool NotificationsEnabled { get; private set; } = true;
+
         private void Awake()
         {
             if (Instance != null && Instance != this) { Destroy(gameObject); return; }
             Instance = this;
+
+            NotificationsEnabled = PlayerPrefs.GetInt(EnabledKey, 1) == 1;
 
 #if UNITY_ANDROID && !UNITY_EDITOR
             var channel = new AndroidNotificationChannel
@@ -61,8 +66,16 @@ namespace AIStartupTycoon.Core
             ScheduleReminder();
         }
 
+        public void SetNotificationsEnabled(bool isEnabled)
+        {
+            NotificationsEnabled = isEnabled;
+            PlayerPrefs.SetInt(EnabledKey, isEnabled ? 1 : 0);
+            if (!isEnabled) CancelReminder();
+        }
+
         private void ScheduleReminder()
         {
+            if (!NotificationsEnabled) return;
 #if UNITY_ANDROID && !UNITY_EDITOR
             CancelReminder(); // clear any previous one first, so pause immediately followed by quit doesn't double-book
 
