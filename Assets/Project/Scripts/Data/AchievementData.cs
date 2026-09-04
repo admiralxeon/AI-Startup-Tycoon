@@ -10,7 +10,9 @@ namespace AIStartupTycoon.Data
         ComputeUpgradesPurchased,
         ReputationUpgradesPurchased,
         IPOCount,
-        Reputation
+        Reputation,
+        PeakCombo,
+        RandomEventsSeen
     }
 
     [CreateAssetMenu(fileName = "Achievement_", menuName = "AIStartupTycoon/Achievement")]

@@ -57,6 +57,8 @@ namespace AIStartupTycoon.Systems
                 case AchievementRequirementType.ReputationUpgradesPurchased: return gm.GetPurchasedReputationUpgradeCount();
                 case AchievementRequirementType.IPOCount: return gm.IPOCount;
                 case AchievementRequirementType.Reputation: return cm.Reputation;
+                case AchievementRequirementType.PeakCombo: return ClickComboManager.Instance != null ? ClickComboManager.Instance.PeakComboCount : 0;
+                case AchievementRequirementType.RandomEventsSeen: return RandomEventManager.Instance != null ? RandomEventManager.Instance.TotalEventsTriggered : 0;
                 default: return 0;
             }
         }

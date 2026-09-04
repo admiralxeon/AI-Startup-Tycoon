@@ -15,6 +15,7 @@ MonoBehaviour:
   tierName: Multimodal
   unlockFlavorText: "Text, images, audio \u2014 all at once, allegedly."
   icon: {fileID: 0}
-  tierOrder: 1000000
+  tierOrder: 4
+  isMilestone: 0
   unlockRevenueThreshold: 1000000
   globalEarningsMultiplier: 2

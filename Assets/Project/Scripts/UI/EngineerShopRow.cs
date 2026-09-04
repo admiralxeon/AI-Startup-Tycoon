@@ -24,6 +24,8 @@ namespace AIStartupTycoon.UI
         public Button buyButton;
         public GameObject lockedOverlay; // shown/hidden based on unlock state
         public TMP_Text lockedRequirementLabel; // caption on the locked overlay itself
+        [Tooltip("Shown only when unlocked but not yet affordable - an ETA at the current passive rate, so a stalled shop doesn't read as 'stuck'.")]
+        public TMP_Text timeToAffordLabel;
 
         private EngineerData _data;
 
@@ -64,6 +66,28 @@ namespace AIStartupTycoon.UI
             ownedLabel.text = $"x{owned}";
             if (rateLabel != null)
                 rateLabel.text = $"{(BigNumber)_data.baseOutputPerSecond}/s each · {(BigNumber)_data.GetOutputForCount(owned)}/s total";
+
+            RefreshTimeToAfford(unlocked, cost);
+        }
+
+        private void RefreshTimeToAfford(bool unlocked, double cost)
+        {
+            if (timeToAffordLabel == null) return;
+
+            double currentRevenue = CurrencyManager.Instance != null ? CurrencyManager.Instance.CurrentRevenue.ToDouble() : 0;
+            bool affordable = currentRevenue >= cost;
+
+            if (!unlocked || affordable)
+            {
+                timeToAffordLabel.gameObject.SetActive(false);
+                return;
+            }
+
+            timeToAffordLabel.gameObject.SetActive(true);
+            double rate = ShopRowUtils.GetEffectivePassiveRate();
+            timeToAffordLabel.text = rate > 0
+                ? $"Affordable in {ShopRowUtils.FormatTimeToAfford((cost - currentRevenue) / rate)}"
+                : "Keep tapping to afford";
         }
 
         private void OnBuyClicked()

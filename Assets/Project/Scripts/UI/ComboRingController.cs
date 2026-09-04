@@ -16,7 +16,7 @@ namespace AIStartupTycoon.UI
     {
         [Header("Ring (around the orb)")]
         public Image ring; // Image Type=Filled, Method=Radial360, Origin=Top, Clockwise
-        public GameObject haloGlow; // optional halo shown only while combo > 0
+        //public GameObject haloGlow; // optional halo shown only while combo > 0
 
         [Header("Linear bar (below the orb)")]
         public Image linearFill; // Image Type=Filled, Method=Horizontal, Origin=Left
@@ -32,7 +32,7 @@ namespace AIStartupTycoon.UI
         {
             if (ring != null) ring.fillAmount = 0f;
             if (linearFill != null) linearFill.fillAmount = 0f;
-            if (haloGlow != null) haloGlow.SetActive(false);
+            //if (haloGlow != null) haloGlow.SetActive(false);
             Refresh(0, 1.0);
 
             if (ClickComboManager.Instance != null)
@@ -57,7 +57,7 @@ namespace AIStartupTycoon.UI
                 ring.fillAmount = pct;
                 ring.color = c;
             }
-            if (haloGlow != null) haloGlow.SetActive(comboOn);
+            //if (haloGlow != null) haloGlow.SetActive(comboOn);
 
             if (linearFill != null)
             {

@@ -11,6 +11,7 @@ namespace AIStartupTycoon.UI
     public class MainScreenStatsController : MonoBehaviour
     {
         [Header("Header")]
+        public TMP_Text titleLabel; // company name, blank until the player names it (naming/IPO reset - see GameManager.CompanyName)
         public TMP_Text stageLabel;
         public TMP_Text passiveRateLabel;
         public TMP_Text valuationLabel;
@@ -59,6 +60,7 @@ namespace AIStartupTycoon.UI
             if (CurrencyManager.Instance == null) return;
             CurrencyManager.Instance.OnRevenueChanged += HandleCurrencyChanged;
             CurrencyManager.Instance.OnLifetimeRevenueChanged += HandleCurrencyChanged;
+            if (GameManager.Instance != null) GameManager.Instance.OnCompanyNameChanged += HandleCompanyNameChanged;
         }
 
         private void OnDisable()
@@ -66,7 +68,10 @@ namespace AIStartupTycoon.UI
             if (CurrencyManager.Instance == null) return;
             CurrencyManager.Instance.OnRevenueChanged -= HandleCurrencyChanged;
             CurrencyManager.Instance.OnLifetimeRevenueChanged -= HandleCurrencyChanged;
+            if (GameManager.Instance != null) GameManager.Instance.OnCompanyNameChanged -= HandleCompanyNameChanged;
         }
+
+        private void HandleCompanyNameChanged(string _) => RefreshHeader();
 
         private void HandleCurrencyChanged(BigNumber _) => RefreshAll();
 
@@ -132,6 +137,12 @@ namespace AIStartupTycoon.UI
             valuationLabel.text = $"${(BigNumber)(cm.LifetimeRevenue.ToDouble() * valuationMultiplier)}";
             reputationLabel.text = $"{cm.Reputation:N0}";
             stageLabel.text = GetStageLabel(cm.LifetimeRevenue.ToDouble());
+
+            if (titleLabel != null)
+            {
+                string name = GameManager.Instance != null ? GameManager.Instance.CompanyName : "";
+                titleLabel.text = string.IsNullOrEmpty(name) ? "AI STARTUP TYCOON" : name;
+            }
         }
 
         private void RefreshCompanyColumn()

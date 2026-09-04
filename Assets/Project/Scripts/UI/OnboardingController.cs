@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using TMPro;
 using AIStartupTycoon.Core;
 
@@ -17,6 +18,8 @@ namespace AIStartupTycoon.UI
         public RectTransform portraitTarget;
         [TextArea] public string title;
         [TextArea] public string body;
+        [Tooltip("If set, this step also advances the moment the player performs the real action (currently: taps the tap button) - Next still works too, so the player is never stuck waiting on a tap that isn't landing.")]
+        public bool waitForRealAction;
     }
 
     /// <summary>
@@ -47,8 +50,19 @@ namespace AIStartupTycoon.UI
         public TMP_Text nextButtonLabel;
         public Button skipButton;
 
+        [Header("Company Naming (shown once the coach-marks finish)")]
+        public CompanyNamingController companyNamingController;
+
+        [Header("Bottom Nav Lock")]
+        [Tooltip("Its buttons are disabled for the whole onboarding + naming flow. It renders as a later sibling than the overlay, so without this the nav bar sits visually on top of the dim scrim and stays fully clickable underneath it.")]
+        public RectTransform bottomNav;
+
         private Canvas _canvas;
         private int _currentStep = -1;
+        private bool _waitingForRealAction;
+        private Button _highlightClickCatcher;
+        private RectTransform _forwardTarget;
+        private Button[] _bottomNavButtons;
 
         private void Start()
         {
@@ -58,10 +72,35 @@ namespace AIStartupTycoon.UI
             nextButton.onClick.AddListener(Advance);
             if (skipButton != null) skipButton.onClick.AddListener(Complete);
 
+            // The overlay's dim scrim renders on top of the whole HQ screen (by design - it
+            // has to block clicks everywhere else during onboarding), which means it also
+            // silently swallows real taps aimed at the highlighted element underneath. Rather
+            // than punch a hole in the scrim, the highlight frame itself - already positioned
+            // exactly over the target every step, and already rendering above the scrim since
+            // it's the scrim's own child - catches the tap and relays it down to the real
+            // target, so a "wait for real action" step actually receives real taps.
+            if (highlightFrame != null)
+            {
+                _highlightClickCatcher = highlightFrame.GetComponent<Button>();
+                if (_highlightClickCatcher == null) _highlightClickCatcher = highlightFrame.gameObject.AddComponent<Button>();
+                _highlightClickCatcher.transition = Selectable.Transition.None;
+                _highlightClickCatcher.onClick.AddListener(ForwardClickToRealTarget);
+                _highlightClickCatcher.enabled = false;
+            }
+
+            if (bottomNav != null) _bottomNavButtons = bottomNav.GetComponentsInChildren<Button>(true);
+
             // Deferred one frame so GameManager.Start() -> LoadGame() has definitely run
             // first, regardless of Unity's arbitrary Start() ordering between scripts -
             // same guard GameManager uses before firing OnOfflineEarningsApplied.
             StartCoroutine(BeginNextFrameIfNeeded());
+        }
+
+        private void SetBottomNavInteractable(bool interactable)
+        {
+            if (_bottomNavButtons == null) return;
+            foreach (var btn in _bottomNavButtons)
+                if (btn != null) btn.interactable = interactable;
         }
 
         private IEnumerator BeginNextFrameIfNeeded()
@@ -81,11 +120,13 @@ namespace AIStartupTycoon.UI
 
             _currentStep = -1;
             if (panelRoot != null) panelRoot.SetActive(true);
+            SetBottomNavInteractable(false);
             Advance();
         }
 
         private void Advance()
         {
+            StopWaitingForRealAction();
             _currentStep++;
             if (_currentStep >= steps.Count) { Complete(); return; }
             ShowStep(steps[_currentStep]);
@@ -93,8 +134,32 @@ namespace AIStartupTycoon.UI
 
         private void Complete()
         {
+            StopWaitingForRealAction();
             if (panelRoot != null) panelRoot.SetActive(false);
+
+            // Coach-marks are done, but onboarding isn't complete until the player has named
+            // their company - same panel used again after every future IPO.
+            if (companyNamingController != null && string.IsNullOrEmpty(GameManager.Instance?.CompanyName))
+            {
+                companyNamingController.OnNameConfirmed += OnNamingConfirmed;
+                companyNamingController.Show(true);
+            }
+            else
+            {
+                FinishOnboarding();
+            }
+        }
+
+        private void OnNamingConfirmed()
+        {
+            companyNamingController.OnNameConfirmed -= OnNamingConfirmed;
+            FinishOnboarding();
+        }
+
+        private void FinishOnboarding()
+        {
             if (GameManager.Instance != null) GameManager.Instance.CompleteOnboarding();
+            SetBottomNavInteractable(true);
         }
 
         private void ShowStep(OnboardingStep step)
@@ -110,7 +175,47 @@ namespace AIStartupTycoon.UI
             if (stepCounterLabel != null) stepCounterLabel.text = $"{_currentStep + 1}/{steps.Count}";
             if (nextButtonLabel != null) nextButtonLabel.text = _currentStep == steps.Count - 1 ? "GOT IT" : "NEXT";
 
+            if (step.waitForRealAction) StartWaitingForRealAction(target);
+
             if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTap();
+        }
+
+        // Advances the step the moment the player actually taps, instead of them having to
+        // notice and click a separate tutorial "Next" - this is the one step that should
+        // feel like doing the thing, not being told about it. Skip still bypasses it.
+        private void StartWaitingForRealAction(RectTransform target)
+        {
+            _forwardTarget = target;
+            if (_highlightClickCatcher != null) _highlightClickCatcher.enabled = true;
+
+            if (_waitingForRealAction) return;
+            _waitingForRealAction = true;
+            if (CurrencyManager.Instance != null)
+                CurrencyManager.Instance.OnClickEarned += OnRealClickDetected;
+        }
+
+        private void StopWaitingForRealAction()
+        {
+            if (_highlightClickCatcher != null) _highlightClickCatcher.enabled = false;
+            _forwardTarget = null;
+
+            if (!_waitingForRealAction) return;
+            _waitingForRealAction = false;
+            if (CurrencyManager.Instance != null)
+                CurrencyManager.Instance.OnClickEarned -= OnRealClickDetected;
+        }
+
+        private void OnRealClickDetected(Utils.BigNumber earned) => Advance();
+
+        // Relays the tap the click-catcher intercepted down to whatever it's standing in for
+        // (the real SHIP IT button, currently) via the same event-system path a genuine
+        // pointer click takes, so every normal side effect (currency, combo, juice, haptics)
+        // fires exactly as if the overlay wasn't there at all.
+        private void ForwardClickToRealTarget()
+        {
+            if (_forwardTarget == null) return;
+            var pointerData = new PointerEventData(EventSystem.current);
+            ExecuteEvents.Execute<IPointerClickHandler>(_forwardTarget.gameObject, pointerData, ExecuteEvents.pointerClickHandler);
         }
 
         private RectTransform ResolveTarget(OnboardingStep step)

@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f5ee19fdc7ce8c34a9b1c0a2c158d19e, type: 3}
+  m_Name: Achievement_StormChaser
+  m_EditorClassIdentifier: Assembly-CSharp::AIStartupTycoon.Data.AchievementData
+  achievementName: STORM CHASER
+  description: Live through 20 market events.
+  icon: {fileID: 21300000, guid: ecdcd1fac3c27164eb6719ad91e142c8, type: 3}
+  requirementType: 8
+  requirementValue: 20
+  reputationMultiplierReward: 1.03

@@ -150,7 +150,7 @@ namespace AIStartupTycoon.Systems
 
         private void AssignNewQuest(int slot)
         {
-            QuestData picked = PickTemplate();
+            QuestData picked = PickTemplate(slot);
             if (picked == null) { _slots[slot] = null; return; }
 
             _slots[slot] = new QuestSlotState
@@ -161,7 +161,7 @@ namespace AIStartupTycoon.Systems
             };
         }
 
-        private QuestData PickTemplate()
+        private QuestData PickTemplate(int slotToFill)
         {
             if (allQuestTemplates == null || allQuestTemplates.Count == 0 || CurrencyManager.Instance == null) return null;
 
@@ -170,6 +170,17 @@ namespace AIStartupTycoon.Systems
                 .Where(q => q != null && lifetimeRevenue >= q.minRevenueThreshold)
                 .ToList();
             if (eligible.Count == 0) return null;
+
+            // Prefer a template that isn't already running in another slot, so the 3 slots
+            // don't collapse into 2 distinct quests. Only fall back to allowing a duplicate
+            // when every eligible template is already taken (e.g. early game with few
+            // unlocked quest types) - a repeat is better than leaving the slot empty.
+            var alreadyAssigned = new HashSet<QuestData>();
+            for (int i = 0; i < _slots.Length; i++)
+                if (i != slotToFill && _slots[i]?.template != null) alreadyAssigned.Add(_slots[i].template);
+
+            List<QuestData> preferred = eligible.Where(q => !alreadyAssigned.Contains(q)).ToList();
+            if (preferred.Count > 0) eligible = preferred;
 
             float totalWeight = eligible.Sum(q => q.weight);
             float roll = UnityEngine.Random.Range(0f, totalWeight);

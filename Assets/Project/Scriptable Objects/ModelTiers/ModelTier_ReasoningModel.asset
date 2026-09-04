@@ -15,6 +15,7 @@ MonoBehaviour:
   tierName: Reasoning Model
   unlockFlavorText: It thinks before it answers. Mostly.
   icon: {fileID: 0}
-  tierOrder: 3
+  tierOrder: 6
+  isMilestone: 0
   unlockRevenueThreshold: 100000000
   globalEarningsMultiplier: 3

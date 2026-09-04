@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using AIStartupTycoon.Utils;
+using AIStartupTycoon.Systems;
 
 namespace AIStartupTycoon.Core
 {
@@ -50,6 +51,7 @@ namespace AIStartupTycoon.Core
             double comboMultiplier = ClickComboManager.Instance != null
                 ? ClickComboManager.Instance.RegisterClick()
                 : 1.0;
+            RandomEventManager.Instance?.RegisterFightBackTap();
             double amount = ClickPowerBase * GlobalEarningsMultiplier * ReputationMultiplier * comboMultiplier;
             BigNumber earned = new BigNumber(amount, 0);
             AddRevenue(earned);

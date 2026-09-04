@@ -8,24 +8,24 @@ namespace AIStartupTycoon.UI
 {
     /// <summary>
     /// Tactile click feedback layered on top of ClickAndRevenueController's existing
-    /// click handling: scale punch, particle burst, floating "+$" popup, subtle shake.
-    /// Driven by CurrencyManager.OnClickEarned (not the button's onClick) so the popup
-    /// always shows the real earned amount, combo multiplier included, instead of
-    /// re-deriving it and risking drift from ClickComboManager's live state. Escalates
-    /// burst/punch intensity with the current combo so sustained tapping visibly ramps up.
+    /// click handling: particle burst, floating "+$" popup, subtle shake. Driven by
+    /// CurrencyManager.OnClickEarned (not the button's onClick) so the popup always
+    /// shows the real earned amount, combo multiplier included, instead of re-deriving
+    /// it and risking drift from ClickComboManager's live state. Escalates burst
+    /// intensity with the current combo so sustained tapping visibly ramps up.
+    /// (No scale-based "punch" here anymore - it fought with the tap button's other
+    /// scale writer for control of the same transform and could ratchet up under rapid
+    /// taps; burst/popup/shake carry the click feedback instead.)
     /// </summary>
     public class ClickJuiceController : MonoBehaviour
     {
         [Header("Refs")]
-        public RectTransform punchTarget;
         public Image burstDotPrefab;
         public TextMeshProUGUI popupTextPrefab;
         public RectTransform popupSpawnPoint;
         public RectTransform shakeTarget;
 
         [Header("Tuning")]
-        public float punchScale = 1.15f;
-        public float punchDuration = 0.12f;
         public float popupRiseDistance = 50f;
         public float popupDuration = 0.6f;
         public float shakeMagnitude = 3f;
@@ -35,21 +35,16 @@ namespace AIStartupTycoon.UI
         public float burstDuration = 0.4f;
 
         [Header("Combo Escalation")]
-        [Tooltip("Extra punch scale added per combo step, on top of the base punchScale.")]
-        public float punchScalePerCombo = 0.01f;
         [Tooltip("Extra burst dots added per combo step.")]
         public float burstDotsPerCombo = 0.3f;
         [Tooltip("Combo step count at which escalation caps out, independent of ClickComboManager's own cap.")]
         public int maxEscalationSteps = 25;
 
-        private Vector3 _originalScale;
         private Vector2 _shakeOriginalPos;
-        private Coroutine _punchRoutine;
         private Coroutine _shakeRoutine;
 
         private void Start()
         {
-            if (punchTarget != null) _originalScale = punchTarget.localScale;
             if (shakeTarget != null) _shakeOriginalPos = shakeTarget.anchoredPosition;
             if (CurrencyManager.Instance != null) CurrencyManager.Instance.OnClickEarned += OnClickEarned;
         }
@@ -65,11 +60,6 @@ namespace AIStartupTycoon.UI
                 ? Mathf.Min(ClickComboManager.Instance.ComboCount, maxEscalationSteps)
                 : 0;
 
-            if (punchTarget != null)
-            {
-                if (_punchRoutine != null) StopCoroutine(_punchRoutine);
-                _punchRoutine = StartCoroutine(PunchScale(punchScale + combo * punchScalePerCombo));
-            }
             if (burstDotPrefab != null) SpawnBurst(burstDotCount + Mathf.RoundToInt(combo * burstDotsPerCombo));
             if (popupTextPrefab != null) SpawnPopup(earned.ToDouble());
             if (shakeTarget != null)
@@ -77,25 +67,6 @@ namespace AIStartupTycoon.UI
                 if (_shakeRoutine != null) StopCoroutine(_shakeRoutine);
                 _shakeRoutine = StartCoroutine(Shake());
             }
-        }
-
-        private IEnumerator PunchScale(float targetPunchScale)
-        {
-            float t = 0f;
-            while (t < punchDuration)
-            {
-                t += Time.unscaledDeltaTime;
-                float p = Mathf.Clamp01(t / punchDuration);
-                float scaleFactor = Mathf.Lerp(targetPunchScale, 1f, EaseOutBack(p));
-                punchTarget.localScale = _originalScale * scaleFactor;
-                yield return null;
-            }
-            punchTarget.localScale = _originalScale;
-        }
-
-        private static float EaseOutBack(float t)
-        {
-            return 1f - Mathf.Pow(1f - t, 3f);
         }
 
         private void SpawnBurst(int dotCount)

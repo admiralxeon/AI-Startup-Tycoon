@@ -11,6 +11,8 @@ namespace AIStartupTycoon.Data
         [TextArea] public string unlockFlavorText;
         public Sprite icon;
         public int tierOrder;
+        [Tooltip("Shows the bigger celebratory unlock popup (halo, dedicated dismiss moment) instead of unlocking silently. Reserve for the handful of tiers that mark a real architectural turning point.")]
+        public bool isMilestone;
 
         [Header("Unlock Condition")]
         [Tooltip("Total lifetime revenue required to unlock this tier.")]

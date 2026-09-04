@@ -40,6 +40,7 @@ namespace AIStartupTycoon.Core
         public event Action<ComputeUpgradeData> OnComputeUpgradePurchased;
         public event Action<ReputationUpgradeData> OnReputationUpgradePurchased;
         public event Action<BigNumber, double> OnOfflineEarningsApplied; // (earned, secondsAway) - UI can subscribe to show a "welcome back" popup
+        public event Action<string> OnCompanyNameChanged;
 
         private void Awake()
         {
@@ -242,6 +243,20 @@ namespace AIStartupTycoon.Core
         /// <summary>Lifetime count of completed IPOs - drives the AchievementManager's IPOCount requirement. Never reset.</summary>
         public int IPOCount { get; private set; }
 
+        // --- Company identity ---
+
+        /// <summary>Player-chosen company name, empty until they name it (first during
+        /// onboarding, then again after every IPO - see ExecuteIPO). UI should treat an
+        /// empty string as "not yet named" rather than showing it blank.</summary>
+        public string CompanyName { get; private set; } = "";
+
+        public void SetCompanyName(string name)
+        {
+            CompanyName = string.IsNullOrWhiteSpace(name) ? "" : name.Trim();
+            OnCompanyNameChanged?.Invoke(CompanyName);
+            SaveGame();
+        }
+
         // --- Onboarding ---
 
         /// <summary>True once the player has finished (or skipped) the first-launch coach-mark sequence. Never reset.</summary>
@@ -285,7 +300,12 @@ namespace AIStartupTycoon.Core
             CurrencyManager.Instance.PassiveOutputMultiplier = 1.0;
             CurrencyManager.Instance.ClickPowerBase = 1.0;
 
-            SaveGame();
+            // Prestiging is framed as starting the next company, not continuing the old
+            // one - the name resets too, and CompanyNamingController.Show() is expected to
+            // follow (wired from IPOScreenController) so the player picks a new one on the spot.
+            // SetCompanyName saves on its own, so this covers the whole reset in one write.
+            SetCompanyName("");
+
             return reputationGained;
         }
 
@@ -351,7 +371,10 @@ namespace AIStartupTycoon.Core
 
                 totalClicks = CurrencyManager.Instance.TotalClicks,
                 ipoCount = IPOCount,
-                onboardingCompleted = OnboardingCompleted
+                peakComboCount = ClickComboManager.Instance != null ? ClickComboManager.Instance.PeakComboCount : 0,
+                totalRandomEventsTriggered = Systems.RandomEventManager.Instance != null ? Systems.RandomEventManager.Instance.TotalEventsTriggered : 0,
+                onboardingCompleted = OnboardingCompleted,
+                companyName = CompanyName
             };
 
             foreach (var kvp in _ownedEngineers)
@@ -397,7 +420,10 @@ namespace AIStartupTycoon.Core
                 data.reputation, data.totalClicks);
 
             IPOCount = data.ipoCount;
+            if (ClickComboManager.Instance != null) ClickComboManager.Instance.LoadPeakCombo(data.peakComboCount);
+            if (Systems.RandomEventManager.Instance != null) Systems.RandomEventManager.Instance.LoadEventsTriggeredCount(data.totalRandomEventsTriggered);
             OnboardingCompleted = data.onboardingCompleted;
+            CompanyName = data.companyName ?? "";
 
             CurrencyManager.Instance.ClickPowerBase = data.clickPowerBase > 0 ? data.clickPowerBase : 1.0;
             CurrencyManager.Instance.GlobalEarningsMultiplier = data.globalEarningsMultiplier > 0 ? data.globalEarningsMultiplier : 1.0;

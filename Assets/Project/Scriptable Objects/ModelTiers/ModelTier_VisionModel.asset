@@ -15,6 +15,7 @@ MonoBehaviour:
   tierName: Vision Model
   unlockFlavorText: "It can see! Sort of !\t"
   icon: {fileID: 0}
-  tierOrder: 1
+  tierOrder: 2
+  isMilestone: 0
   unlockRevenueThreshold: 10000
   globalEarningsMultiplier: 1.5

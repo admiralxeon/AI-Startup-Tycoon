@@ -25,6 +25,11 @@ namespace AIStartupTycoon.UI
         public Button dismissButton;
         public TMP_Text dismissButtonLabel;    // mockup uses flavor text like "SHIP FASTER, THEN"
 
+        [Header("Effect Chip Materials")]
+        [Tooltip("Swapped based on the event's effect sign, so a penalty doesn't render on the same green chip as a bonus.")]
+        public Material positiveEffectMaterial;
+        public Material negativeEffectMaterial;
+
         private void Start()
         {
             dismissButton.onClick.AddListener(OnDismissPressed);
@@ -64,10 +69,16 @@ namespace AIStartupTycoon.UI
                 double percent = (evt.temporaryEarningsMultiplier - 1.0) * 100.0;
                 bool positive = percent >= 0;
                 string sign = positive ? "+" : "";
-                effectChipLabel.text = $"Revenue {sign}{percent:N0}% for the next {evt.durationSeconds:N0} seconds";
-                effectChipLabel.color = positive
-                    ? new Color32(120, 220, 130, 255)
-                    : new Color32(255, 122, 90, 255);
+                string hint = positive ? "" : " - keep tapping!";
+                effectChipLabel.text = $"{sign}{percent:N0}% for {evt.durationSeconds:N0}s{hint}";
+                effectChipLabel.color = Color.white; // legible on either chip material below
+
+                var chipGraphic = effectChipRoot.GetComponent<Graphic>();
+                if (chipGraphic != null)
+                {
+                    var chosen = positive ? positiveEffectMaterial : negativeEffectMaterial;
+                    if (chosen != null) chipGraphic.material = chosen;
+                }
             }
 
             if (dismissButtonLabel != null)

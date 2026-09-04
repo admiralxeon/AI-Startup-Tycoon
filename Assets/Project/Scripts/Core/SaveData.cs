@@ -36,10 +36,16 @@ namespace AIStartupTycoon.Core
         // Achievement tracking
         public long totalClicks;
         public int ipoCount;
+        public int peakComboCount;
+        public int totalRandomEventsTriggered;
         public List<string> unlockedAchievementNames = new List<string>();
 
         // Onboarding - runs once per save file
         public bool onboardingCompleted;
+
+        // Player-chosen company name - cleared on every IPO, since prestiging is framed as
+        // starting the next company (see GameManager.ExecuteIPO).
+        public string companyName = "";
 
         // Daily login reward streak
         public string dailyLoginLastClaimedDateUtc;

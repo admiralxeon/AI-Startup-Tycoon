@@ -24,6 +24,10 @@ namespace AIStartupTycoon.Core
         public int ComboCount { get; private set; }
         public double ComboMultiplier { get; private set; } = 1.0;
 
+        /// <summary>Highest combo ever reached, across the whole save file (not reset by
+        /// IPO or by the combo itself timing out) - drives the PeakCombo achievement type.</summary>
+        public int PeakComboCount { get; private set; }
+
         /// <summary>Fires whenever combo count or multiplier changes, including the reset to 0.</summary>
         public event Action<int, double> OnComboChanged;
 
@@ -51,8 +55,16 @@ namespace AIStartupTycoon.Core
 
             ComboCount = withinWindow ? Mathf.Min(ComboCount + 1, maxComboSteps) : 0;
             ComboMultiplier = 1.0 + ComboCount * bonusPerStep;
+            if (ComboCount > PeakComboCount) PeakComboCount = ComboCount;
             OnComboChanged?.Invoke(ComboCount, ComboMultiplier);
             return ComboMultiplier;
+        }
+
+        /// <summary>Restores the lifetime peak from a save file. Only ever raises the value -
+        /// never call this to reset it, since that would erase past achievement progress.</summary>
+        public void LoadPeakCombo(int savedPeak)
+        {
+            if (savedPeak > PeakComboCount) PeakComboCount = savedPeak;
         }
 
         private void ResetCombo()

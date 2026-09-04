@@ -41,6 +41,9 @@ namespace AIStartupTycoon.UI
         public TMP_Text resultsTotalReputationLabel;
         public Button resultsContinueButton;
 
+        [Header("Company Naming (shown after every IPO - see GameManager.ExecuteIPO)")]
+        public CompanyNamingController companyNamingController;
+
         private void Start()
         {
             if (openIPOButton != null) openIPOButton.onClick.AddListener(ShowPanel);
@@ -136,6 +139,10 @@ namespace AIStartupTycoon.UI
         {
             if (UIAudioManager.Instance != null) UIAudioManager.Instance.PlayTap();
             HidePanel();
+
+            // ExecuteIPO already cleared CompanyName - prompt for the next company's name
+            // right here, same panel onboarding uses, before the player's back on the HQ screen.
+            if (companyNamingController != null) companyNamingController.Show(false);
         }
     }
 }

@@ -33,6 +33,8 @@ namespace AIStartupTycoon.UI
         public Button replayTutorialButton;
         public Button resetProgressButton;
         public Button exitGameButton;
+        public Button codexButton;
+        public CodexPanelController codexPanelController;
         public OnboardingController onboardingController;
         [Tooltip("Shared with AndroidBackButtonHandler, which owns the Yes/Cancel wiring - this button just opens it.")]
         public GameObject exitConfirmPanel;
@@ -49,6 +51,7 @@ namespace AIStartupTycoon.UI
             if (hapticsToggleButton != null) hapticsToggleButton.onClick.AddListener(ToggleHaptics);
             if (idleNotifToggleButton != null) idleNotifToggleButton.onClick.AddListener(ToggleIdleNotifications);
             replayTutorialButton.onClick.AddListener(ReplayTutorial);
+            if (codexButton != null) codexButton.onClick.AddListener(OpenCodex);
             resetProgressButton.onClick.AddListener(() => resetConfirmRoot.SetActive(true));
             if (exitGameButton != null) exitGameButton.onClick.AddListener(OpenExitConfirm);
             resetConfirmButton.onClick.AddListener(ConfirmReset);
@@ -103,6 +106,11 @@ namespace AIStartupTycoon.UI
         {
             if (mainNavController != null) mainNavController.Show(0); // back to HQ, so the tutorial highlights land on real targets
             if (onboardingController != null) onboardingController.Begin();
+        }
+
+        private void OpenCodex()
+        {
+            if (codexPanelController != null) codexPanelController.Show();
         }
 
         private void ConfirmReset()

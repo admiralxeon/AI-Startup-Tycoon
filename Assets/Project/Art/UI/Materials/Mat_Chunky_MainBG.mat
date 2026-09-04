@@ -41,9 +41,9 @@ Material:
     - _StopB: 1
     m_Colors:
     - _BorderColor: {r: 1, g: 1, b: 1, a: 0.08}
-    - _ColorA: {r: 0.18039216, g: 0.16078432, b: 0.36862746, a: 1}
-    - _ColorB: {r: 0.16078432, g: 0.14509805, b: 0.39607847, a: 1}
-    - _ColorC: {r: 0.1137255, g: 0.10196079, b: 0.29411766, a: 1}
+    - _ColorA: {r: 0.5568628, g: 0.41176474, b: 0.9176471, a: 1}
+    - _ColorB: {r: 0.145, g: 0.125, b: 0.263, a: 1}
+    - _ColorC: {r: 0.44705886, g: 0.21960786, b: 0.86274517, a: 1}
     - _ShadowColor: {r: 0, g: 0, b: 0, a: 0.3}
     - _ShadowOffset: {r: 0, g: -5, b: 0, a: 0}
   m_BuildTextureStacks: []

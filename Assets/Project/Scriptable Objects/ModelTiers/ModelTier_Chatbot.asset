@@ -16,5 +16,6 @@ MonoBehaviour:
   unlockFlavorText: Just a wrapper around an API, but it works.
   icon: {fileID: 0}
   tierOrder: 0
+  isMilestone: 0
   unlockRevenueThreshold: 0
   globalEarningsMultiplier: 1

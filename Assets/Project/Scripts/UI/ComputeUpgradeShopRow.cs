@@ -25,6 +25,8 @@ namespace AIStartupTycoon.UI
         public GameObject lockedOverlay;
         public TMP_Text lockedRequirementLabel; // caption on the locked overlay itself
         public GameObject purchasedOverlay;
+        [Tooltip("Shown only when unlocked, unpurchased, and not yet affordable.")]
+        public TMP_Text timeToAffordLabel;
 
         [Header("State Materials")]
         public Material iconInstalledMat;
@@ -72,6 +74,20 @@ namespace AIStartupTycoon.UI
                 iconBadge.material = _purchased ? iconInstalledMat : (unlocked ? iconAvailableMat : iconLockedMat);
             if (buyButtonGraphic != null && unlocked && !_purchased)
                 buyButtonGraphic.material = affordable ? buttonAffordableMat : buttonUnaffordableMat;
+
+            if (timeToAffordLabel != null)
+            {
+                bool showEta = unlocked && !_purchased && !affordable;
+                timeToAffordLabel.gameObject.SetActive(showEta);
+                if (showEta)
+                {
+                    double currentRevenue = CurrencyManager.Instance != null ? CurrencyManager.Instance.CurrentRevenue.ToDouble() : 0;
+                    double rate = ShopRowUtils.GetEffectivePassiveRate();
+                    timeToAffordLabel.text = rate > 0
+                        ? $"Affordable in {ShopRowUtils.FormatTimeToAfford((_data.cost - currentRevenue) / rate)}"
+                        : "Keep tapping to afford";
+                }
+            }
         }
 
         private void OnBuyClicked()
